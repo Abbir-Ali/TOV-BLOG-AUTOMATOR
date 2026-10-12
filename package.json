@@ -19,7 +19,8 @@
     "test": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:golden": "vitest run tests/golden",
-    "test:cleanup": "node dist/scripts/cleanup.js"
+    "test:cleanup": "node dist/scripts/cleanup.js",
+    "setup:dev": "node dist/scripts/setup-dev.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
