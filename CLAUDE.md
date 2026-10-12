@@ -22,10 +22,13 @@ formatted guide into Shopify admin by hand. This app removes that manual step co
    actually appears in the source doc.
 5. If something required is missing or invalid → status **Needs input**, the user sees exactly what is missing,
    and an email alert goes out.
-6. If valid → status **Ready**. The scheduler (or an "urgent" action) creates the article in Shopify.
-7. Emails go to configured recipients for: items needing input, failures, schedule summaries, and published items.
+6. If valid → status **Ready**. The scheduler (or an "urgent" action) creates the article in Shopify **as a draft**.
+7. The marketing team reviews the draft. They publish it themselves in Shopify admin, or approve it in the app
+   and click **Publish** (now or on a date they choose). The app never publishes on its own.
+8. Emails go to configured recipients: admins get everything; blog staff get blog-related alerts.
 
-**Users:** Abbir (developer/admin) and the TOV marketing team (non-technical). The UI must be simple and visual.
+**Users:** anyone with TOV Shopify admin access and access to this app (Abbir, the marketing team, others).
+The marketing team is non-technical — the UI must be simple and visual.
 
 ---
 
@@ -37,9 +40,10 @@ These rules override convenience. Never weaken them without Abbir explicitly app
    must come from the source Google Doc. After extraction, run a **verbatim check**: each text field (after
    normalizing whitespace and stripping HTML tags) must be found in the doc's text. Any mismatch → Needs input,
    never auto-fixed silently.
-2. **Draft by default.** Articles are created with `isPublished: false` unless a schedule or urgent action
-   explicitly says otherwise. Publish behaviour is set in code from app settings, never taken from Gemini output
-   or from document content.
+2. **Drafts only; publishing is always a human action.** The app always creates articles with
+   `isPublished: false`. Schedules and urgent actions only control *when drafts are created*. An article is
+   published only when a person clicks Publish in the app (with a confirmation step, now or on a chosen date)
+   or publishes it in Shopify admin. Never derive publish behaviour from Gemini output or document content.
 3. **Template rules come from the content-type config, not from the AI.** Blog handle, template suffix, and
    metafield namespace/key/type are fixed per content type and set in code.
 4. **No duplicates.** Every queue item stores the Shopify article ID once created. Re-processing updates that
@@ -72,9 +76,15 @@ These rules override convenience. Never weaken them without Abbir explicitly app
 - **Shopify:** Admin GraphQL API only (no REST). Pin the API version in one config place. Key operations:
   look up blog by handle, `articleCreate`, `articleUpdate`, read `metafieldDefinitions` for owner type ARTICLE,
   look up products by handle.
-- **Email:** Resend (or another transactional provider if Abbir chooses). Wrap it behind one `sendEmail()` module
-  so the provider can be swapped.
-- **Hosting:** Render / Railway / Fly (to be decided). Must support a long-running web process + worker.
+- **Email:** wrap behind one `sendEmail()` module so the provider can be swapped. Development: a free option
+  (Resend free tier or Gmail SMTP from a TOV Google Workspace account). Production: likely Amazon SES, since the
+  app will run on AWS. Decide with Abbir before Phase 7.
+- **Hosting:** TOV's engineering team will deploy on **AWS**. Keep the app portable: everything configured via
+  env vars, a working Dockerfile, no host-specific services. Postgres will likely be AWS RDS.
+- **Repository:** currently Abbir's personal GitHub; will move to the company GitHub org before production.
+  Nothing may be tied to a personal account (no personal emails, tokens or URLs in code).
+- **Shopify apps:** one app for the development store now; production app will be created under the
+  company's Shopify organisation later. Same code, different env vars.
 - **Developer machine:** Windows. Give Windows-compatible commands (PowerShell), and note any differences.
 
 ---
@@ -86,6 +96,7 @@ These rules override convenience. Never weaken them without Abbir explicitly app
 - `docs/content-types/inspired-article-rules.md` — original Claude Project instructions (source of truth for rules)
 - `docs/content-types/press-article.md` — Press spec
 - `docs/samples/` — real input brief and finished output examples
+- `docs/marketing/` — the Google Doc templates marketing must follow (Inspired and Press)
 
 ---
 
@@ -93,7 +104,8 @@ These rules override convenience. Never weaken them without Abbir explicitly app
 
 - **ContentType** — one per kind of blog (Inspired Article, Press, …).
   - name, blogHandle, templateSuffix, defaultAuthor
-  - inputKind: `google_doc` (one doc per item, e.g. Inspired) | `sheet_rows` (one row per item, e.g. Press) | `form`
+  - inputKind: `google_doc` (one doc per item — both Inspired and Press today); keep the field so other input
+    kinds can be added later
   - fieldMap: list of fields → for each: label, target (`title` | `body` | `summary` | `tags` | `author` |
     `handle` | `image` | `metafield`), metafield namespace/key/type, required (bool), extraction hint
   - extraction instructions for Gemini specific to this type (e.g. how FORMAT tags map to HTML)
@@ -103,34 +115,39 @@ These rules override convenience. Never weaken them without Abbir explicitly app
   - status (see below), lastError, missingFields[]
   - extractedPayload (JSON), sourceSnapshotHash (to detect doc changes)
   - scheduledFor, shopifyArticleId, shopifyAdminUrl, createdBy, timestamps
-- **Schedule** — rules such as "N per day, these weekdays, between these hours, this timezone", plus mode
-  (create as draft / create with future publish date / publish immediately). Pausable.
-- **NotificationRule** — event type → list of email recipients.
+- **Schedule** — rules such as "create N drafts per day, these weekdays, between these hours, this timezone".
+  Controls draft creation only. Pausable.
+- **Recipients** — two groups set in Settings: **Admins** (receive every email, including system errors) and
+  **Blog staff** (receive blog-related emails only: needs input, missing content, draft ready for review).
 - **ActivityLog** — every action and error per item, for the History page.
 
 **Queue item statuses:**
-`Queued → Fetching → Extracting → Validating → Ready | NeedsInput | Failed → Scheduled → Created (draft) | Published`
+`Queued → Fetching → Extracting → Validating → Ready | NeedsInput | Failed → Scheduled → Draft created
+(awaiting review) → Approved → Published`
+The app periodically syncs with Shopify so an article published directly in Shopify admin is marked Published.
 
 ---
 
 ## 5. Features (target scope)
 
-1. **Bucket** — add single or bulk Google Doc links (or a sheet whose rows become items, or a form entry,
-   depending on the content type), choose content type, drag to reorder, pause/remove, see status badges.
+1. **Bucket** — add single or bulk Google Doc links, choose content type (Inspired / Press), drag to reorder,
+   pause/remove, see status badges.
 2. **Processing pipeline** — fetch → extract (Gemini) → verbatim check → template mapping → validation against
    Shopify metafield definitions → product handle checks.
 3. **Review / Needs input** — side-by-side view: extracted fields vs. source doc. Missing/invalid fields
    highlighted. User can fill gaps manually in the app or fix the doc and click "Re-check".
 4. **Preview** — rendered preview of the article before it goes to Shopify.
-5. **Scheduling** — rules + calendar view of what goes out when; per-item date override.
-6. **Urgent** — "Process now" skips the queue; optional "publish now" with a confirmation step.
-   Still must pass validation.
+5. **Scheduling** — rules for when drafts are created + calendar view; per-item date override.
+6. **Urgent** — "Create draft now" skips the queue and creates the final draft immediately (still must pass
+   validation), then notifies reviewers.
+6b. **Review & approval** — reviewers see drafts awaiting review, open them in Shopify, then either publish in
+   Shopify or click Approve → Publish now / Publish on date in the app (confirmation required).
 7. **Shopify push** — create/update article with all metafields atomically; tag drafts that needed manual input
    (e.g. `auto:needs-review`) so they are visible in Shopify admin too.
 8. **Product picker** (shared) — search Shopify products by name/URL, show thumbnails, user confirms. Used for
    Inspired product-card links and Press `Article_Featured_product`. Always stores product GIDs.
-9. **Email alerts** — needs input, failed, schedule summary (e.g. daily digest of what's coming), published
-   confirmations. Recipients configurable per event.
+9. **Email alerts** — Blog staff + Admins: needs input / missing content, draft ready for review, published.
+   Admins only: system errors (Shopify, Google, Gemini, email failures) and a daily summary.
 10. **History** — log of everything created, with links to Shopify admin and errors.
 11. **Settings** — content types/templates, schedule defaults, email recipients, connection tests
     (Shopify, Google, Gemini, email).
@@ -154,7 +171,8 @@ Work one phase at a time. Do not start the next phase until Abbir confirms the c
 - **Phase 6 — Scheduler + Urgent.**
 - **Phase 7 — Email notifications.**
 - **Phase 8 — History, Settings, polish.**
-- **Phase 9 — Deployment + switch to live store.**
+- **Phase 9 — Handover for deployment.** Move repo to the company GitHub org, Dockerfile + deployment README for
+  the AWS team, production Shopify app config. Live store only after the dev store run is fully trusted.
 
 ---
 
@@ -181,8 +199,19 @@ Record each decision with date and reason.
 - 2026-10-12 — Articles created as drafts by default; publishing only via explicit schedule/urgent settings.
 - 2026-10-12 — Deterministic parsing for most fields; Gemini only for judgement calls, always verbatim-checked.
 - 2026-10-12 — Validation has two levels: BLOCK (item cannot be created) and ADVISE (draft created, checklist warning).
-- 2026-10-12 — Press uses sheet rows or an in-app form instead of one Google Doc per mention (to confirm with marketing).
 - 2026-10-12 — Metafield types confirmed from Shopify admin; see docs/shopify-article-metafields.md (rule 7).
+- 2026-10-12 — Drafts only. Schedules/urgent control draft creation; publishing is always a human action
+  (in Shopify admin, or Approve → Publish in the app).
+- 2026-10-12 — Users: anyone with Shopify admin + app access. Email recipients in two groups: Admins, Blog staff.
+- 2026-10-12 — Development and testing on the Shopify dev store only until fully trusted.
+- 2026-10-12 — Production hosting by TOV's engineering team on AWS; repo moves to the company GitHub org.
+- 2026-10-12 — Content types in scope: Inspired (most common) and Press. Other blogs exist (News, furniture-care, …)
+  and must be addable later via config only.
+- 2026-10-12 — Press also uses one Google Doc per item, following docs/marketing/press-doc-template.md.
+- 2026-10-12 — Featured_Blog is never written by the app; marketing sets it manually during review.
+- 2026-10-12 — Product-card metafields confirmed: `custom_content_with_badge` → `[[custom-content-with-badge]]`,
+  `custom_content_with_badge2` → `[[custom-content-with-badge2]]` (theme section article-custom-layout.liquid).
+- 2026-10-12 — Press: customlink_text always "read the article"; Add_Schema_Mentions always true.
 
 ---
 
@@ -190,7 +219,7 @@ Record each decision with date and reason.
 
 - See the "Open questions" section at the end of each content-type spec.
 - Exact metafield keys marked TBC in docs/shopify-article-metafields.md (confirm with the definitions dump).
-- Any further content types beyond Inspired and Press.
+- A TYPE_6_COMPARISON sample (Inspired).
 - URL handle and SEO title/description: from the doc or auto-generated from the title?
 - Should urgent items be allowed to publish immediately, or only create a draft immediately?
 - Email provider and sender domain.

@@ -8,7 +8,7 @@ If the dump disagrees with this file, the dump wins — update this file and tel
 
 | Admin name | Key (namespace `custom`) | Shopify type | Value format to send | Used by |
 |---|---|---|---|---|
-| Featured Blog | `Featured_Blog` | `boolean` | `"true"` / `"false"` (lowercase string) | Inspired |
+| Featured Blog | `Featured_Blog` | `boolean` | **not written by the app** — marketing sets it manually during review | — |
 | homepage display tag | `homepage_display_tag` | `single_line_text_field` | plain string, no newlines | Inspired |
 | reading time | `reading_time` | `single_line_text_field` | e.g. `5 min read` | Inspired |
 | author image | `author_image` | `file_reference` | file GID — **not used** | — |
@@ -20,8 +20,8 @@ If the dump disagrees with this file, the dump wins — update this file and tel
 | sidebar cta button text | `sidebar_cta_button_text` | `single_line_text_field` | plain string | Inspired |
 | sidebar button link | `sidebar_button_link` | `single_line_text_field` (not URL type) | URL as plain string | Inspired |
 | article toc title | `article_toc_title` | `single_line_text_field` | h2 texts joined with `\|\|` | Inspired |
-| Type 2 custom content1 | TBC (guide says `custom_content_with_badge`) | `json` | JSON array, serialized as string | Inspired |
-| Type 2 custom content2 | TBC | `json` | JSON array, serialized as string | Inspired (2nd product section?) |
+| Type 2 custom content1 | `custom_content_with_badge` (confirmed in theme) | `json` | JSON array, serialized as string | Inspired — body placeholder `[[custom-content-with-badge]]` |
+| Type 2 custom content2 | `custom_content_with_badge2` (confirmed in theme) | `json` | JSON array, same card shape, serialized as string | Inspired — body placeholder `[[custom-content-with-badge2]]` |
 | FAQS | `faqs` (TBC) | `json` | `[{"question","answer"}]` serialized as string | Inspired |
 | cta title 1 | `cta_title_1` | `single_line_text_field` | plain string | Inspired |
 | cta text 1 | `cta_text_1` | `multi_line_text_field` | plain string | Inspired |
@@ -40,8 +40,8 @@ If the dump disagrees with this file, the dump wins — update this file and tel
 
 ## Type gotchas
 
-- **Booleans** (`Featured_Blog`, `Add_Schema_Mentions`): send `"true"`, never `"True"`. The old paste guide
-  says "True" because a human was typing it into a toggle.
+- **Booleans** (`Add_Schema_Mentions`): send `"true"`, never `"True"`. The old paste guide says "True"
+  because a human was typing it into a toggle. (`Featured_Blog` is not written by the app at all.)
 - **Rich text** (`quick_scoop_content`): the value must be Shopify's rich-text JSON, e.g.
   `{"type":"root","children":[{"type":"paragraph","children":[{"type":"text","value":"Plain clear glass is…"}]}]}`.
   Sending plain text will be rejected.
