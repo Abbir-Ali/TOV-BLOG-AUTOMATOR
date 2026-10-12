@@ -1,0 +1,186 @@
+NOTE FOR CLAUDE CODE
+This is the finished paste guide the Claude Project produced for the "Glass Decor Is Having a Moment" article,
+after a follow-up message that supplied PDP URLs (product cards and checklist below are the final versions).
+The raw brief for this article is not included; compare structure against storage-ottomans-brief.txt.
+On the live article, a human later changed: cta_button_label_1 → "Shop Glass",
+cta_button_link_1 → "https://tovfurniture.com/collections/glass", and filled Article Featured product
+with Fishy Water Glass, Ruff Ombre Pink, Shell Orange, Heart Amber (and possibly Gourd). Featured Blog was left empty.
+Metafield value formats here are the human paste format — the app must follow docs/shopify-article-metafields.md.
+
+----------------------------------------------------------------------
+
+⚠️ DRAFT ONLY. When creating this article in Shopify admin, set status to DRAFT. Select template: article-custom-json. Do not publish until the Before Publishing Checklist is complete.
+
+ARTICLE FIELDS
+Title
+Glass Decor Is Having a Moment
+
+Excerpt
+Plain clear glass is getting competition. Colored, ruffled and a little bit whimsical glass is the decor move right now, and it works on a shelf, a console or a dinner table. Here is why the trend is taking off, the new TOV glass pieces to know, and how to style them without trying too hard.
+
+Tags
+glass-decor,colored-glass-vases,fish-glasses,2026-trends,shelf-styling
+
+Template
+article-custom-json
+
+BODY HTML
+<h2 id="toc1">Plain Glass Just Got Personality</h2>
+<p>For a long time, glass decor meant a clear cylinder and a bunch of grocery store tulips. Fine. Forgettable.</p>
+<p>Now the glass is the main character. Color is creeping in, shapes are getting sculptural, and even the water glass has a sense of humor. Designers are treating vases like small sculptures instead of filler, and colored glass is gaining ground on clear.</p>
+<p>We have been busy. Our newest glass pieces include a set of fish glasses that makes every sip a little more fun, plus a lineup of ruffled, tinted vases in shades from soft pink to amber. Best part: every piece in this edit is under $50.</p>
+
+<h2 id="toc2">Why Glass Works Right Now</h2>
+<h3>Color That Plays With Light</h3>
+<p>Colored glass does something paint cannot. Light moves through it, so a pink or amber vase by a window glows and throws color across the surface beneath it. Set one near a lamp and it changes with the time of day.</p>
+<h3>Sculpture, Not Filler</h3>
+<p>Vases have been promoted. A ruffled rim or a pedestal base gives a vase its own silhouette, which means it looks good empty. No flowers required.</p>
+<h3>Collected, Not Matched</h3>
+<p>Rooms that look gathered over time are winning over rooms that look ordered from a single catalog page. A little whimsy, like a glass with a fish on it, is exactly how that look happens. It tells people you have a sense of humor and good taste at the same time.</p>
+
+<h2 id="toc3">Meet the Glass Edit</h2>
+<p>One drinkware set and four vase styles, all new. Here is what each one brings.</p>
+[[custom-content-with-badge]]
+
+<h2 id="toc4">Style It Like You Collected It</h2>
+<h3>Group by Color Family</h3>
+<p>Cluster two or three vases in related shades. Pink, salmon and peach together look like a deliberate gradient. Seafoam and amber together look like a gallery wall for your console.</p>
+<h3>Put It Where the Light Lands</h3>
+<p>Colored glass is at its best near a window or beside a lamp. Place a Ruff or a Shell where the sun hits and let the color do the work.</p>
+<h3>Let It Stand Alone</h3>
+<p>The Ruff is made to look good on its own, so skip the stems if you like. One sculptural vase on a clean surface beats a crowded vignette every time.</p>
+<h3>Set the Table With a Wink</h3>
+<p>Put the Fishy glasses out at dinner and add one small vase in the center. The table reads as playful and put together instead of themed.</p>
+<p>Upload a photo of your room and let our visualizer show you exactly how it looks. <a href="https://tovfurniture.com/pages/design-box" style="color: rgb(183, 91, 100);">Try The Design Box →</a></p>
+
+METAFIELDS
+Reading Time · custom.reading_time
+5 min read
+
+Blog Tagline · custom.blogtagline
+Glass Decor · Colored Glass Vases
+
+Homepage Display Tag · custom.homepage_display_tag
+Glass Decor
+
+Article TOC Title · custom.article_toc_title
+Plain Glass Just Got Personality||Why Glass Works Right Now||Meet the Glass Edit||Style It Like You Collected It
+
+Article Author · custom.article_author
+Cat Dang
+
+Quick Scoop Content · custom.quick_scoop_content
+Plain clear glass is getting competition. Colored, ruffled and a little bit whimsical glass is the decor move right now, and it works on a shelf, a console or a dinner table. Here is why the trend is taking off, the new TOV glass pieces to know, and how to style them without trying too hard.
+
+Sidebar CTA Title · custom.sidebar_cta_title
+See It In Your Space
+
+Sidebar CTA Text · custom.sidebar_cta_text
+Upload a photo of your room and let our visualizer show you exactly how it looks.
+
+Sidebar CTA Button Text · custom.sidebar_cta_button_text
+Try The Design Box
+
+Sidebar Button Link · custom.sidebar_button_link
+https://tovfurniture.com/pages/design-box
+
+Featured Blog · custom.Featured_Blog
+True
+
+CTA Title 1 · custom.cta_title_1
+Ready to Make Your Shelves Shine?
+
+CTA Text 1 · custom.cta_text_1
+Pick a color, pick a shape and give your room some personality. Glass this good should not live in the back of a cabinet.
+
+CTA Button Label 1 · custom.cta_button_label_1
+Shop Vases & Planters
+
+CTA Button Link 1 · custom.cta_button_link_1 → leave blank (confirm URL before publishing)
+
+PRODUCT CARDS
+Custom Content With Badge · custom.custom_content_with_badge  (admin name: "Type 2 custom content1")
+[
+  {
+    "title": "Fishy Water Glass, Set of 4",
+    "badge": "New Arrival",
+    "badge_color": "#b15a63",
+    "badge_text_color": "#ffffff",
+    "description": "Clear borosilicate glass with a playful fish accent and a rounded shape that is easy to hold. Each glass measures 3.5\" on every side, so they sit nicely on a bar cart or a dinner table. Use them for water, juice or cocktails.",
+    "bullets": ["Best for hosts who like their table setting to start a conversation."],
+    "footer_label": "Shop Fishy →",
+    "footer_text": "<a href=\"https://tovfurniture.com/products/fishy-water-glass-set-of-4\" style=\"color: rgb(183, 91, 100);\">Fishy Water Glass, Set of 4</a>"
+  },
+  {
+    "title": "Ruff Vases",
+    "badge": "Most Variety",
+    "badge_color": "#805e39",
+    "badge_text_color": "#ffffff",
+    "description": "A slender pedestal base meets a fluted, ruffled top, with soft ombre tones and a slightly asymmetrical finish that gives each piece character. The family comes in a range of heights and hues, including Pink, Ombre Pink, Salmon, Peach and Yellow. The Ruff Pink stands 7.3\" tall.",
+    "bullets": ["Best for anyone who wants sculpture on a shelf."],
+    "footer_label": "Shop Ruff →",
+    "footer_text": "<a href=\"https://tovfurniture.com/products/ruff-neck-tilted-ombre-pink-vase\" style=\"color: rgb(183, 91, 100);\">Ruff Ombre Pink Glass Vase</a>"
+  },
+  {
+    "title": "Shell Vases",
+    "badge": "",
+    "badge_color": "",
+    "badge_text_color": "#ffffff",
+    "description": "Glass vases in seafoam green and orange. Cool and warm, same family.",
+    "bullets": ["Best for adding a color pop to a console, a shelf or a bathroom counter."],
+    "footer_label": "Shop Shell →",
+    "footer_text": "<a href=\"https://tovfurniture.com/products/shell-orange-vase\" style=\"color: rgb(183, 91, 100);\">Shell Orange Glass Vase</a>"
+  },
+  {
+    "title": "Heart Amber Glass Vase",
+    "badge": "",
+    "badge_color": "",
+    "badge_text_color": "#ffffff",
+    "description": "Warm amber glass with a heart design.",
+    "bullets": ["Best for the person who wants a little romance without going full pastel."],
+    "footer_label": "Shop Heart →",
+    "footer_text": "<a href=\"https://tovfurniture.com/products/heart-glass-amber-vase\" style=\"color: rgb(183, 91, 100);\">Heart Amber Glass Vase</a>"
+  },
+  {
+    "title": "Gourd Yellow Glass Vase",
+    "badge": "",
+    "badge_color": "",
+    "badge_text_color": "#ffffff",
+    "description": "Sunny yellow glass in a rounded gourd shape.",
+    "bullets": ["Best for brightening a dark shelf or a neutral room."],
+    "footer_label": "Shop Gourd →",
+    "footer_text": "<a href=\"https://tovfurniture.com/products/gourd-yellow-vase\" style=\"color: rgb(183, 91, 100);\">Gourd Yellow Glass Vase</a>"
+  }
+]
+
+FAQS
+FAQs · custom.faqs
+[
+  {"question":"What are the Fishy Water Glasses made of?","answer":"Clear borosilicate glass, which has a lightweight feel and stays crisp and clear. They come as a set of four and each glass is 3.5\" in every direction."},
+  {"question":"Can I put the fish glasses in the dishwasher?","answer":"TOV recommends washing them by hand, gently, with mild soap. Avoid sudden temperature changes and abrasive tools so the glass and the fish detail stay in good shape."},
+  {"question":"Do I need flowers to use a decorative vase?","answer":"Nope. These vases are designed to look good with flowers, with decorative accents, or on their own. The Ruff in particular is sculptural enough to stand alone."},
+  {"question":"How do I clean colored glass vases?","answer":"Wipe with a soft, dry cloth and spot clean with mild soap and water when needed. Skip harsh cleaners and chemicals. See TOV's furniture care guide for more."},
+  {"question":"Will my vase look exactly like the photo?","answer":"Close, but not identical. Natural variation is part of what makes each piece unique, and the Ruff's ombre tones and gentle asymmetry are part of its charm."},
+  {"question":"Where do these pieces work best?","answer":"Shelves, consoles, dining tables and coffee tables all work. They are easy to layer into a vignette or let shine solo."}
+]
+
+BEFORE PUBLISHING CHECKLIST
+[ ] Upload hero image to the article Featured Image field
+[ ] Select template: article-custom-json
+[ ] Set status to DRAFT. Do not publish until reviewed and approved.
+[ ] Confirm all PDP URLs in the product card footer_text links
+[ ] Set custom.Featured_Blog to True
+[ ] Confirm custom.homepage_display_tag matches the tag you want shown on the homepage card
+[ ] Confirm sidebar CTA fields are correct (defaults to Design Box)
+[ ] Confirm custom.banner_position if the hero image focal point needs adjusting (e.g. top center, 30% 50%)
+[ ] Confirm custom.cta_button_link_1 before publishing (Vases & Planters collection)
+[ ] Empty badge: Shell Vases; Heart Amber Glass Vase; Gourd Yellow Glass Vase
+[ ] Shell Vases card names seafoam green and orange but only the Shell Orange PDP was provided. Add the Shell Seafoam PDP link inline if wanted.
+[ ] Ruff Vases card quotes the Ruff Pink height (7.3") but links to Ruff Ombre Pink. Confirm the height matches the linked PDP or add the Ruff Pink link inline.
+[ ] Add dimensions for Shell, Heart and Gourd vases once confirmed (copy currently sticks to name, color and category)
+[ ] Trend framing is paraphrased from lower-authority sources (Jamali Garden, Homedit, Hengjing Glass). Swap in a design publication if available.
+[ ] Verify the "under $50" price line still holds at regular price (highest item: Shell Seafoam at $49.99)
+[ ] Stock check: Fishy Water Glass showed preorder with a 9/29/2026 restock date
+[ ] Returns check: Fishy and Ruff PDPs say not eligible for return. Confirm before publish.
+[ ] Add internal links FROM: Vases & Planters collection, Drinkware collection, New Arrivals page, homepage decor module, and PDPs for Fishy Water Glass and the Ruff, Shell, Heart and Gourd vases
+[ ] Add Search Console AI feature citation tracking as a success KPI (90 days post-publish)
