@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "tov-shopify": {
+      "command": "node",
+      "args": ["E:/TOV Blog Tool/dist/index.js"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "fetch_google_doc",
+        "parse_brief",
+        "get_metafield_definitions",
+        "find_products",
+        "find_article_by_source",
+        "get_article",
+        "validate_payload"
+      ]
+    }
+  }
+}
