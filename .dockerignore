@@ -1,0 +1,11 @@
+.env
+.env.*
+secrets/
+node_modules/
+dist/
+runs/
+.git/
+*.md
+tests/
+.kiro/
+knowledge/

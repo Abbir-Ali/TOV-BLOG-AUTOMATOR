@@ -47,7 +47,7 @@ export function getConfig(): Config {
   loadEnv();
   const e = process.env;
   const creds = clean(e.GOOGLE_APPLICATION_CREDENTIALS) ?? "./secrets/service-account.json";
-  const rawPort = clean(e.HTTP_PORT);
+  const rawPort = clean(e.HTTP_PORT) ?? clean(e.PORT); // Railway injects PORT automatically
   const httpPort = rawPort ? parseInt(rawPort, 10) : undefined;
   const allowedApiKeys = new Set(
     (e.ALLOWED_API_KEYS ?? "")

@@ -67,10 +67,25 @@ export function serviceAccountEmail(): string {
 
 async function googleClients() {
   const cfg = getConfig();
+  const { google } = await import("googleapis"); // lazy: keeps server start fast
+
+  // Support GOOGLE_SERVICE_ACCOUNT_JSON env var (base64-encoded JSON) for containerised deployments
+  // where writing a key file to disk isn't practical (e.g. Railway, Render).
+  const jsonEnv = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+  if (jsonEnv) {
+    try {
+      const raw = Buffer.from(jsonEnv, "base64").toString("utf8");
+      const credentials = JSON.parse(raw) as object;
+      const auth = new google.auth.GoogleAuth({ credentials, scopes: SCOPES });
+      return { docs: google.docs({ version: "v1", auth }), drive: google.drive({ version: "v3", auth }) };
+    } catch {
+      throw new ToolError("CONFIG", "GOOGLE_SERVICE_ACCOUNT_JSON is set but could not be parsed (must be base64-encoded JSON)");
+    }
+  }
+
   if (!existsSync(cfg.googleCredentials)) {
     throw new ToolError("CONFIG", `Google service account key not found at ${cfg.googleCredentials} (GOOGLE_APPLICATION_CREDENTIALS)`);
   }
-  const { google } = await import("googleapis"); // lazy: keeps server start fast
   const auth = new google.auth.GoogleAuth({ keyFile: cfg.googleCredentials, scopes: SCOPES });
   return { docs: google.docs({ version: "v1", auth }), drive: google.drive({ version: "v3", auth }) };
 }
