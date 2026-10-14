@@ -75,6 +75,7 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
   let featuredImageLine: number | null = null;
   let mode: "header" | "toc" | "links" | "section" = "header";
   let lastLabel: string | null = null;
+  let lastMetaLabel: string | null = null;
 
   for (const l of lines) {
     const fmt = FORMAT_RE.exec(l.text);
@@ -103,6 +104,7 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
     }
     if (labels) {
       mode = labels.has("IN THIS ARTICLE") ? "toc" : "header";
+      lastMetaLabel = null;
       for (const [k, v] of labels) {
         if (k === "EDITOR METADATA" || k === "IN THIS ARTICLE") continue;
         header.set(k === "SUMMARY" ? "SUMMARY (TLDR)" : k, v);
@@ -118,7 +120,14 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
     const m = splitLabels(l.text, META_LABELS);
     if (m) {
       for (const [k, v] of m) meta.set(k, v.replace(/\s*\/\s*$/, "").trim());
+      lastMetaLabel = [...m.keys()].pop()!;
       lastLabel = null;
+      continue;
+    }
+    // Multi-line meta fields (e.g. Editor notes spanning several lines).
+    if (lastMetaLabel && meta.get(lastMetaLabel) !== undefined) {
+      const cur = meta.get(lastMetaLabel)!;
+      meta.set(lastMetaLabel, cur ? `${cur}\n${l.text}` : l.text);
       continue;
     }
     if (l.text === "EDITOR METADATA") continue;
