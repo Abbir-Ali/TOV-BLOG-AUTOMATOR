@@ -36,6 +36,7 @@ const META_LABELS = ["Week", "Owner", "Existing URL", "Internal links FROM", "Ed
 // Allow optional trailing content on the FORMAT line (e.g. "CTA LINK:" in the same table cell).
 const FORMAT_RE = /^\[FORMAT:\s*(TYPE_\d+_[A-Z]+)\s*\]/i;
 const CTA_LINK_RE = /^CTA LINK\s*:\s*(\S+)\s*$/i;
+const CTA_LINK_EMPTY_RE = /^CTA LINK\s*:\s*$/i;
 const BEST_FOR_RE = /(?:^|(?<=[.!?]["”'’)]*)\s+)Best for\b/;
 
 interface Line {
@@ -249,7 +250,7 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
         const body = rest.filter((l) => {
           const m = CTA_LINK_RE.exec(l.text);
           if (m) cta.link = m[1];
-          return !m;
+          return !m && !CTA_LINK_EMPTY_RE.test(l.text);
         });
         if (body.length >= 2) {
           cta.label = body.at(-1)!.text;
