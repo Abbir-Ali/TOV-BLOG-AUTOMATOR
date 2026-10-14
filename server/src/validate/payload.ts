@@ -257,8 +257,13 @@ function validateInspired(
     if (!Array.isArray(faqs)) errors.push({ field: "metafields.faqs", kind: "type", message: "faqs must be an array" });
     else
       faqs.forEach((f, i) => {
-        const keys = f && typeof f === "object" ? Object.keys(f) : [];
-        if (keys.join(",") !== "question,answer") {
+        if (!f || typeof f !== "object" || Array.isArray(f)) {
+          errors.push({ field: `metafields.faqs[${i}]`, kind: "type", message: 'each FAQ must be exactly {"question","answer"}' });
+          return;
+        }
+        // Normalise key order: accept {answer, question} as well as {question, answer}.
+        const keys = new Set(Object.keys(f));
+        if (!keys.has("question") || !keys.has("answer") || keys.size !== 2) {
           errors.push({ field: `metafields.faqs[${i}]`, kind: "type", message: 'each FAQ must be exactly {"question","answer"}' });
           return;
         }

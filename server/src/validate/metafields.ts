@@ -89,6 +89,14 @@ export function serializeValue(key: string, type: MetafieldType | string, raw: u
         }
       }
       if (v === null || typeof v !== "object") return { error: "json field must be an array or object" };
+      // Normalise FAQ key order: always {question, answer} regardless of input order.
+      if (key === "faqs" && Array.isArray(v)) {
+        v = (v as Record<string, unknown>[]).map((f) =>
+          f && typeof f === "object" && "question" in f && "answer" in f
+            ? { question: f.question, answer: f.answer }
+            : f,
+        );
+      }
       return { value: JSON.stringify(v) };
     }
     case "list.product_reference": {
