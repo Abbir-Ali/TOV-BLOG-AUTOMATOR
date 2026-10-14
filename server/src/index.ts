@@ -271,11 +271,15 @@ if (cfg.httpPort) {
       res.end(JSON.stringify({ error: "Server misconfigured: ALLOWED_API_KEYS is empty", code: "CONFIG" }));
       return false;
     }
+    // Accept key via Authorization: Bearer header (Kiro, curl, backend clients)
+    // OR as ?key=<token> query parameter (Claude.ai connector — it doesn't support custom headers).
     const header = req.headers["authorization"] ?? "";
-    const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+    const headerToken = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+    const urlToken = new URL(req.url ?? "", "http://localhost").searchParams.get("key") ?? "";
+    const token = headerToken || urlToken;
     if (!token || !cfg.allowedApiKeys.has(token)) {
       res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": 'Bearer realm="tov-shopify"' });
-      res.end(JSON.stringify({ error: "Unauthorized — provide a valid API key in Authorization: Bearer <key>", code: "AUTH_DENIED" }));
+      res.end(JSON.stringify({ error: "Unauthorized — provide a valid API key in Authorization: Bearer <key> or ?key=<token>", code: "AUTH_DENIED" }));
       return false;
     }
     return true;
@@ -290,7 +294,9 @@ if (cfg.httpPort) {
     }
 
     // All MCP traffic arrives at /mcp as POST (Streamable HTTP spec).
-    if (req.url === "/mcp") {
+    // URL may include ?key=<token> for Claude.ai connector auth.
+    const pathname = new URL(req.url ?? "", "http://localhost").pathname;
+    if (pathname === "/mcp") {
       if (!authenticate(req, res)) return;
 
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
