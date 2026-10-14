@@ -35,6 +35,10 @@ export interface Config {
   googleCredentials: string;
   env: "test" | "prod";
   dryRun: boolean;
+  /** Streamable HTTP transport — undefined means stdio only */
+  httpPort?: number;
+  /** Comma-separated bearer tokens. Empty = HTTP auth disabled (stdio only). */
+  allowedApiKeys: Set<string>;
 }
 
 const clean = (v: string | undefined) => (v ?? "").trim() || undefined;
@@ -43,6 +47,14 @@ export function getConfig(): Config {
   loadEnv();
   const e = process.env;
   const creds = clean(e.GOOGLE_APPLICATION_CREDENTIALS) ?? "./secrets/service-account.json";
+  const rawPort = clean(e.HTTP_PORT);
+  const httpPort = rawPort ? parseInt(rawPort, 10) : undefined;
+  const allowedApiKeys = new Set(
+    (e.ALLOWED_API_KEYS ?? "")
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean),
+  );
   return {
     storeDomain: (clean(e.SHOPIFY_STORE_DOMAIN) ?? "").toLowerCase(),
     allowedStores: (e.ALLOWED_STORES ?? "")
@@ -57,6 +69,8 @@ export function getConfig(): Config {
     googleCredentials: isAbsolute(creds) ? creds : resolve(PROJECT_ROOT, creds),
     env: clean(e.MCP_ENV) === "prod" ? "prod" : "test",
     dryRun: clean(e.DRY_RUN)?.toLowerCase() === "true",
+    httpPort,
+    allowedApiKeys,
   };
 }
 
@@ -74,6 +88,7 @@ export function assertStoreAllowed(cfg: Config = getConfig()): void {
 export type ErrorCode =
   | "STORE_GUARD"
   | "AUTH"
+  | "AUTH_DENIED"
   | "THROTTLED"
   | "SHOPIFY_ERROR"
   | "USER_ERRORS"

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { z } from "zod";
 import { CONTENT_TYPES } from "./config/contentTypes.js";
 import { getConfig, loadEnv, ToolError } from "./config/env.js";
@@ -254,9 +256,64 @@ if (cfg.env === "test") {
 }
 
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
-// stdout is the MCP channel — log to stderr only.
-console.error(
-  `tov-shopify MCP server ready (store=${cfg.storeDomain || "unset"}, env=${cfg.env}, dryRun=${cfg.dryRun}, api=${cfg.apiVersion})`,
-);
+// ---------------------------------------------------------------- Transport
+
+if (cfg.httpPort) {
+  // ---------- Streamable HTTP (Claude.ai custom connector) ----------
+  // Every request must carry a valid API key:  Authorization: Bearer <key>
+  // Keys are stored in ALLOWED_API_KEYS (comma-separated) in .env on the server.
+  // The key is never echoed back or logged.
+
+  function authenticate(req: IncomingMessage, res: ServerResponse): boolean {
+    if (cfg.allowedApiKeys.size === 0) {
+      // No keys configured — HTTP transport is locked until keys are set.
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Server misconfigured: ALLOWED_API_KEYS is empty", code: "CONFIG" }));
+      return false;
+    }
+    const header = req.headers["authorization"] ?? "";
+    const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+    if (!token || !cfg.allowedApiKeys.has(token)) {
+      res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": 'Bearer realm="tov-shopify"' });
+      res.end(JSON.stringify({ error: "Unauthorized — provide a valid API key in Authorization: Bearer <key>", code: "AUTH_DENIED" }));
+      return false;
+    }
+    return true;
+  }
+
+  const httpServer = createServer(async (req, res) => {
+    // Health check — unauthenticated, used by load balancers / Claude connectivity test.
+    if (req.method === "GET" && req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, name: "tov-shopify", env: cfg.env }));
+      return;
+    }
+
+    // All MCP traffic arrives at /mcp as POST (Streamable HTTP spec).
+    if (req.url === "/mcp") {
+      if (!authenticate(req, res)) return;
+
+      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+      res.on("close", () => transport.close());
+      await server.connect(transport);
+      await transport.handleRequest(req, res);
+      return;
+    }
+
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Not found" }));
+  });
+
+  httpServer.listen(cfg.httpPort, () => {
+    console.error(
+      `tov-shopify HTTP server ready on port ${cfg.httpPort} (store=${cfg.storeDomain}, env=${cfg.env}, dryRun=${cfg.dryRun})`,
+    );
+  });
+} else {
+  // ---------- stdio (Kiro / local MCP inspector) ----------
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error(
+    `tov-shopify MCP server ready (store=${cfg.storeDomain || "unset"}, env=${cfg.env}, dryRun=${cfg.dryRun}, api=${cfg.apiVersion})`,
+  );
+}
