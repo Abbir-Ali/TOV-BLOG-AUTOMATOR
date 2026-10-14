@@ -19,7 +19,7 @@ const LABELS = [
 ] as const;
 
 export function parsePress(text: string): ParseResult {
-  const lines = text.split(/\r?\n/).map((t, i) => ({ i, text: t.trim() })).filter((l) => l.text);
+  const lines = text.split(/\r?\n/).map((t, i) => ({ i, text: t.trim() })).filter((l) => l.text && !l.text.startsWith("//"));
   const fields = new Map<string, string>();
   const products: { name: string; url: string | null }[] = [];
   const unparsed: Unparsed[] = [];

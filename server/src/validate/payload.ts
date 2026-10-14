@@ -135,9 +135,18 @@ export function validatePayload(raw: unknown, sourceText: string, defs?: Metafie
   const { inputs, errors: typeErrors } = buildMetafieldInputs(ct, mf, defs);
   errors.push(...typeErrors);
 
-  // Pass through the model's advisories after ours (dedupe by message).
-  const seen = new Set(advisories.map((x) => x.message));
-  for (const adv of p.advisories ?? []) if (!seen.has(adv.message)) advisories.push(adv), seen.add(adv.message);
+  // Pass through the model's advisories after ours (dedupe by normalised field key).
+  // Strip "article." / "metafields." prefixes so parser fields like "image" and "cta_button_link_1"
+  // match the validator's "article.image" and "metafields.cta_button_link_1".
+  const normField = (f: string | undefined) => (f ?? "").replace(/^(article|metafields)\./, "").replace(/^metafields\./, "");
+  const seenFields = new Set(advisories.map((x) => normField(x.field)));
+  for (const adv of p.advisories ?? []) {
+    const key = normField(adv.field);
+    if (!seenFields.has(key)) {
+      advisories.push(adv);
+      seenFields.add(key);
+    }
+  }
 
   return { ok: errors.length === 0, errors, advisories, payload: p, metafieldInputs: inputs };
 }

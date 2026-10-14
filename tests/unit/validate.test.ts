@@ -88,6 +88,23 @@ describe("validate_payload", () => {
     expect(validatePayload(p, brief).errors.some((e) => /keys must be exactly/.test(e.message))).toBe(true);
   });
 
+  it("deduplicates advisories from parser and validator (no double image/cta warnings)", () => {
+    // Parser emits { field: "image", message: "No FEATURED IMAGE…" }
+    // Validator emits { field: "article.image", message: "No featured image…" }
+    // Parser emits { field: "cta_button_link_1", message: "Not in doc…" }
+    // Validator emits { field: "metafields.cta_button_link_1", message: "CTA button link…" }
+    // After dedup, each should appear exactly once.
+    const p = basePayload();
+    // Ensure no featured image and no CTA link (matching the storage-ottomans fixture state)
+    delete p.article.image;
+    delete p.metafields.cta_button_link_1;
+    const v = validatePayload(p, brief);
+    const imageAdvisories = v.advisories.filter((a) => /image/i.test(a.field ?? "") && /featured image/i.test(a.message));
+    const ctaAdvisories = v.advisories.filter((a) => /cta_button_link_1/.test(a.field ?? ""));
+    expect(imageAdvisories.length).toBe(1);
+    expect(ctaAdvisories.length).toBe(1);
+  });
+
   it("errors when live definitions disagree with §8", () => {
     const p = basePayload();
     const defs = Object.keys(p.metafields).map((key) => ({ namespace: "custom", key, name: key, type: "single_line_text_field", validations: [] }));

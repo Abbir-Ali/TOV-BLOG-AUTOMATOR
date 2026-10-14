@@ -33,7 +33,8 @@ const HEADER_LABELS = [
   "EDITOR METADATA",
 ] as const;
 const META_LABELS = ["Week", "Owner", "Existing URL", "Internal links FROM", "Editor notes"] as const;
-const FORMAT_RE = /^\[FORMAT:\s*(TYPE_\d+_[A-Z]+)\s*\]\s*$/i;
+// Allow optional trailing content on the FORMAT line (e.g. "CTA LINK:" in the same table cell).
+const FORMAT_RE = /^\[FORMAT:\s*(TYPE_\d+_[A-Z]+)\s*\]/i;
 const CTA_LINK_RE = /^CTA LINK\s*:\s*(\S+)\s*$/i;
 const BEST_FOR_RE = /(?:^|(?<=[.!?]["”'’)]*)\s+)Best for\b/;
 
@@ -51,7 +52,7 @@ interface Section {
 const isSubheading = (s: string) => !endsWithTerminal(s) && s.split(/\s+/).length <= 12 && !/^https?:\/\//.test(s);
 
 export function parseInspired(text: string, images: InlineImage[] = []): ParseResult {
-  const lines: Line[] = text.split(/\r?\n/).map((t, i) => ({ i, text: t.trim() })).filter((l) => l.text);
+  const lines: Line[] = text.split(/\r?\n/).map((t, i) => ({ i, text: t.trim() })).filter((l) => l.text && !l.text.startsWith("//"));
   const advisories: Advisory[] = [];
   const unparsed: Unparsed[] = [];
   const missing: string[] = [];
@@ -73,6 +74,9 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
     if (fmt) {
       sections.push({ format: fmt[1]!.toUpperCase(), lines: [] });
       mode = "section";
+      // "CTA LINK: https://…" may appear on the same line as the FORMAT marker in table-based templates
+      const trailing = l.text.slice(fmt[0].length).trim();
+      if (trailing) sections[sections.length - 1]!.lines.push({ i: l.i, text: trailing });
       continue;
     }
     const labels = splitLabels(l.text, HEADER_LABELS);
