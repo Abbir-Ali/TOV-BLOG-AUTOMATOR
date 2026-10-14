@@ -52,7 +52,14 @@ interface Section {
 const isSubheading = (s: string) => !endsWithTerminal(s) && s.split(/\s+/).length <= 12 && !/^https?:\/\//.test(s);
 
 export function parseInspired(text: string, images: InlineImage[] = []): ParseResult {
-  const lines: Line[] = text.split(/\r?\n/).map((t, i) => ({ i, text: t.trim() })).filter((l) => l.text && !l.text.startsWith("//"));
+  // Drop blank lines, // comment lines, and the TOV brief template's structural label lines
+  // (e.g. "Text section — heading + paragraphs", "Article body", "Before you submit", etc.)
+  // These are only noise; the [FORMAT: …] markers themselves are the real section boundaries.
+  const TEMPLATE_NOISE = /^(?:(?:Text section|Tips or how-to|Product options|Comparison card|FAQ|Call to action)\s*[—–-]|Article (?:header|body)|Navigation and products|Before you submit|☐\s)/i;
+  const lines: Line[] = text
+    .split(/\r?\n/)
+    .map((t, i) => ({ i, text: t.trim() }))
+    .filter((l) => l.text && !l.text.startsWith("//") && !TEMPLATE_NOISE.test(l.text));
   const advisories: Advisory[] = [];
   const unparsed: Unparsed[] = [];
   const missing: string[] = [];
