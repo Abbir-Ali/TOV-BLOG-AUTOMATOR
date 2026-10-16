@@ -116,6 +116,7 @@ export class OAuthServer {
     if (method === "POST" && path === "/oauth/authorize") return this.authorizePost(url, req, res);
     if (method === "POST" && path === "/oauth/token")     return this.token(req, res);
     if (method === "POST" && path === "/oauth/revoke")    return this.revoke(req, res);
+    if (method === "POST" && path === "/oauth/register")  return this.register(req, res);
 
     return false; // not handled
   }
@@ -138,6 +139,7 @@ export class OAuthServer {
       authorization_endpoint: `${this.cfg.baseUrl}/oauth/authorize`,
       token_endpoint: `${this.cfg.baseUrl}/oauth/token`,
       revocation_endpoint: `${this.cfg.baseUrl}/oauth/revoke`,
+      registration_endpoint: `${this.cfg.baseUrl}/oauth/register`,
       response_types_supported: ["code"],
       grant_types_supported: ["authorization_code", "refresh_token"],
       code_challenge_methods_supported: ["S256"],
@@ -318,6 +320,40 @@ export class OAuthServer {
     if (token) this.db.revokeRefreshToken(hashToken(token));
     // RFC 7009: always 200 regardless of whether token existed
     json(res, 200, {});
+    return true;
+  }
+
+  // ---- POST /oauth/register — Dynamic Client Registration (RFC 7591) ----
+  // Claude uses DCR to register itself as an OAuth client before starting the auth flow.
+  // We accept any registration and return a stable client_id derived from the request.
+  // Since our auth is user/password based, the client identity doesn't gatekeep anything.
+  private async register(req: IncomingMessage, res: ServerResponse): Promise<true> {
+    let body: Record<string, unknown> = {};
+    try {
+      let raw = "";
+      await new Promise<void>((resolve) => {
+        req.on("data", (c: Buffer) => { raw += c.toString(); });
+        req.on("end", resolve);
+      });
+      if (raw) body = JSON.parse(raw) as Record<string, unknown>;
+    } catch { /* ignore parse errors */ }
+
+    // Return a stable client_id. We use a fixed value since all clients
+    // (Claude instances) share the same access model — per-user auth via login form.
+    const clientId = "claude-mcp-client";
+    const redirectUris = (body.redirect_uris as string[] | undefined) ?? [
+      "https://claude.ai/api/mcp/auth_callback",
+    ];
+
+    json(res, 201, {
+      client_id: clientId,
+      client_secret_expires_at: 0, // public client — no secret
+      redirect_uris: redirectUris,
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"],
+      token_endpoint_auth_method: "none",
+      scope: "mcp:tools",
+    });
     return true;
   }
 
