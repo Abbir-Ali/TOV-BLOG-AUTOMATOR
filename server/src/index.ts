@@ -260,45 +260,78 @@ if (cfg.env === "test") {
 
 if (cfg.httpPort) {
   // ---------- Streamable HTTP (Claude.ai custom connector) ----------
-  // Every request must carry a valid API key:  Authorization: Bearer <key>
-  // Keys are stored in ALLOWED_API_KEYS (comma-separated) in .env on the server.
-  // The key is never echoed back or logged.
+  // Auth mode is determined by env vars:
+  //   OAuth mode:   OAUTH_BASE_URL + OAUTH_TOKEN_SECRET set → full OAuth 2.0 with SQLite
+  //   API key mode: ALLOWED_API_KEYS set → legacy bearer token (Kiro/local)
+  // Both modes can coexist: OAuth takes precedence for MCP traffic;
+  // API keys still work as a fallback for Kiro and local testing.
+
+  // Initialise OAuth server if configured
+  let oauthServer: import("./oauth/server.js").OAuthServer | null = null;
+  if (cfg.oauth) {
+    const { OAuthDb } = await import("./oauth/db.js");
+    const { OAuthServer } = await import("./oauth/server.js");
+    const db = await OAuthDb.open(cfg.oauth.dbPath);
+    oauthServer = new OAuthServer(db, cfg.oauth);
+    console.error(`tov-shopify OAuth server ready (db=${cfg.oauth.dbPath})`);
+  }
 
   function authenticate(req: IncomingMessage, res: ServerResponse): boolean {
-    if (cfg.allowedApiKeys.size === 0) {
-      // No keys configured — HTTP transport is locked until keys are set.
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Server misconfigured: ALLOWED_API_KEYS is empty", code: "CONFIG" }));
+    const authHeader = req.headers["authorization"] ?? "";
+
+    // --- OAuth JWT path ---
+    if (oauthServer) {
+      const identity = oauthServer.validateBearerToken(authHeader);
+      if (identity) return true;
+
+      // No valid JWT — return proper OAuth 401 so Claude knows to start auth flow
+      const prm = cfg.oauth
+        ? `${cfg.oauth.baseUrl}/.well-known/oauth-protected-resource`
+        : "";
+      res.writeHead(401, {
+        "Content-Type": "application/json",
+        "WWW-Authenticate": `Bearer resource_metadata="${prm}"`,
+      });
+      res.end(JSON.stringify({ error: "Unauthorized — sign in via OAuth", code: "AUTH_DENIED" }));
       return false;
     }
-    // Accept key via Authorization: Bearer header (Kiro, curl, backend clients)
-    // OR as ?key=<token> query parameter (Claude.ai connector — it doesn't support custom headers).
-    const header = req.headers["authorization"] ?? "";
-    const headerToken = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+
+    // --- Legacy API key path (Kiro / local) ---
+    if (cfg.allowedApiKeys.size === 0) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Server misconfigured: no auth method configured", code: "CONFIG" }));
+      return false;
+    }
+    const headerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
     const urlToken = new URL(req.url ?? "", "http://localhost").searchParams.get("key") ?? "";
     const token = headerToken || urlToken;
     if (!token || !cfg.allowedApiKeys.has(token)) {
       res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": 'Bearer realm="tov-shopify"' });
-      res.end(JSON.stringify({ error: "Unauthorized — provide a valid API key in Authorization: Bearer <key> or ?key=<token>", code: "AUTH_DENIED" }));
+      res.end(JSON.stringify({ error: "Unauthorized — provide a valid API key", code: "AUTH_DENIED" }));
       return false;
     }
     return true;
   }
 
   const httpServer = createServer(async (req, res) => {
-    // Health check — unauthenticated, used by load balancers / Claude connectivity test.
-    if (req.method === "GET" && req.url === "/health") {
+    const pathname = new URL(req.url ?? "", "http://localhost").pathname;
+
+    // Health check — unauthenticated
+    if (req.method === "GET" && pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, name: "tov-shopify", env: cfg.env }));
+      res.end(JSON.stringify({ ok: true, name: "tov-shopify", env: cfg.env, auth: oauthServer ? "oauth" : "apikey" }));
       return;
     }
 
-    // All MCP traffic arrives at /mcp as POST (Streamable HTTP spec).
-    // URL may include ?key=<token> for Claude.ai connector auth.
-    const pathname = new URL(req.url ?? "", "http://localhost").pathname;
+    // OAuth endpoints (discovery + login + token) — handled before auth check
+    if (oauthServer) {
+      const handled = await oauthServer.handle(req, res);
+      if (handled) return;
+    }
+
+    // MCP endpoint
     if (pathname === "/mcp") {
       if (!authenticate(req, res)) return;
-
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
       res.on("close", () => transport.close());
       await server.connect(transport);
@@ -312,7 +345,7 @@ if (cfg.httpPort) {
 
   httpServer.listen(cfg.httpPort, () => {
     console.error(
-      `tov-shopify HTTP server ready on port ${cfg.httpPort} (store=${cfg.storeDomain}, env=${cfg.env}, dryRun=${cfg.dryRun})`,
+      `tov-shopify HTTP server ready on port ${cfg.httpPort} (store=${cfg.storeDomain}, env=${cfg.env}, dryRun=${cfg.dryRun}, auth=${oauthServer ? "oauth" : "apikey"})`,
     );
   });
 } else {

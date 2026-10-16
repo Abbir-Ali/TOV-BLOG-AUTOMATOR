@@ -37,8 +37,21 @@ export interface Config {
   dryRun: boolean;
   /** Streamable HTTP transport — undefined means stdio only */
   httpPort?: number;
-  /** Comma-separated bearer tokens. Empty = HTTP auth disabled (stdio only). */
+  /** Legacy API keys — kept for Kiro/local use. Empty = OAuth-only mode. */
   allowedApiKeys: Set<string>;
+  /** OAuth config — required when HTTP_PORT is set and ALLOWED_API_KEYS is empty */
+  oauth: {
+    /** Public base URL of this server e.g. https://app.tovfurniture.com/mcp/tov-blog */
+    baseUrl: string;
+    /** Secret for signing JWTs and auth codes — 64-char hex */
+    tokenSecret: string;
+    /** Path to SQLite database file */
+    dbPath: string;
+    /** Access token lifetime in seconds (default 3600 = 1 hour) */
+    accessTokenTtl: number;
+    /** Refresh token lifetime in seconds (default 86400 = 24 hours) */
+    refreshTokenTtl: number;
+  } | null;
 }
 
 const clean = (v: string | undefined) => (v ?? "").trim() || undefined;
@@ -55,6 +68,19 @@ export function getConfig(): Config {
       .map((k) => k.trim())
       .filter(Boolean),
   );
+
+  const oauthBaseUrl = clean(e.OAUTH_BASE_URL);
+  const oauthTokenSecret = clean(e.OAUTH_TOKEN_SECRET);
+  const oauth = oauthBaseUrl && oauthTokenSecret
+    ? {
+        baseUrl: oauthBaseUrl.replace(/\/+$/, ""),
+        tokenSecret: oauthTokenSecret,
+        dbPath: clean(e.OAUTH_DB_PATH) ?? resolve(PROJECT_ROOT, "data", "oauth.db"),
+        accessTokenTtl: parseInt(clean(e.OAUTH_ACCESS_TOKEN_TTL) ?? "3600", 10),
+        refreshTokenTtl: parseInt(clean(e.OAUTH_REFRESH_TOKEN_TTL) ?? "86400", 10),
+      }
+    : null;
+
   return {
     storeDomain: (clean(e.SHOPIFY_STORE_DOMAIN) ?? "").toLowerCase(),
     allowedStores: (e.ALLOWED_STORES ?? "")
@@ -71,6 +97,7 @@ export function getConfig(): Config {
     dryRun: clean(e.DRY_RUN)?.toLowerCase() === "true",
     httpPort,
     allowedApiKeys,
+    oauth,
   };
 }
 
