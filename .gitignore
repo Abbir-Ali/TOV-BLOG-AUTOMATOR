@@ -6,4 +6,3 @@ dist/
 secrets/
 runs/
 *.log
-supervisor/tov-blog-mcp.conf
