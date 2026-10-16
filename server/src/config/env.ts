@@ -21,7 +21,15 @@ export function loadEnv(): void {
   if (loaded) return;
   loaded = true;
   const file = resolve(PROJECT_ROOT, ".env");
-  if (existsSync(file)) process.loadEnvFile(file);
+  if (existsSync(file)) {
+    try {
+      process.loadEnvFile(file);
+    } catch (err) {
+      // Permission error or unreadable — log and continue. Env vars from
+      // supervisor / shell environment take precedence anyway.
+      console.error(`Warning: could not read .env at ${file}: ${(err as Error).message}`);
+    }
+  }
 }
 
 export interface Config {
