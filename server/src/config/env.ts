@@ -51,6 +51,8 @@ export interface Config {
     accessTokenTtl: number;
     /** Refresh token lifetime in seconds (default 86400 = 24 hours) */
     refreshTokenTtl: number;
+    /** Email allowlist — only these addresses can log in. Empty = no restriction. */
+    allowedEmails: Set<string>;
   } | null;
 }
 
@@ -78,6 +80,12 @@ export function getConfig(): Config {
         dbPath: clean(e.OAUTH_DB_PATH) ?? resolve(PROJECT_ROOT, "data", "oauth.db"),
         accessTokenTtl: parseInt(clean(e.OAUTH_ACCESS_TOKEN_TTL) ?? "3600", 10),
         refreshTokenTtl: parseInt(clean(e.OAUTH_REFRESH_TOKEN_TTL) ?? "86400", 10),
+        allowedEmails: new Set(
+          (e.ALLOWED_EMAILS ?? "")
+            .split(",")
+            .map((e) => e.trim().toLowerCase())
+            .filter(Boolean),
+        ),
       }
     : null;
 

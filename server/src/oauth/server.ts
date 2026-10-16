@@ -195,12 +195,17 @@ export class OAuthServer {
     }
 
     // Validate user
+    // Check allowlist first (before hitting the DB) to avoid timing oracle
+    if (this.cfg.allowedEmails.size > 0 && !this.cfg.allowedEmails.has(email)) {
+      // Deliberate vague message — don't reveal whether the email is blocked or wrong password
+      html(res, 200, loginForm(params, "Incorrect email or password. Try again."));
+      return true;
+    }
     const user = this.db.getUserByEmail(email);
     if (!user || !verifyPassword(password, user.password_hash)) {
       html(res, 200, loginForm(params, "Incorrect email or password. Try again."));
       return true;
     }
-
     // Issue auth code (5 minute TTL)
     const code = generateAuthCode();
     const expiresAt = Math.floor(Date.now() / 1000) + 300;

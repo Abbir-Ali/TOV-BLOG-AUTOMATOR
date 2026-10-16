@@ -44,11 +44,16 @@ const [, , command, email] = process.argv;
 switch (command) {
   case "add": {
     if (!email) { console.error("Usage: admin add <email>"); process.exit(1); }
-    const existing = db.getUserByEmail(email);
+    const normalised = email.toLowerCase();
+    if (cfg.oauth.allowedEmails.size > 0 && !cfg.oauth.allowedEmails.has(normalised)) {
+      console.error(`❌ ${email} is not in ALLOWED_EMAILS. Add it to the env var first.`);
+      process.exit(1);
+    }
+    const existing = db.getUserByEmail(normalised);
     if (existing) { console.error(`User ${email} already exists. Use 'passwd' to change the password.`); process.exit(1); }
     const pw = await promptPassword(`Password for ${email}: `);
     const hash = hashPassword(pw);
-    const id = db.createUser(email.toLowerCase(), hash);
+    const id = db.createUser(normalised, hash);
     console.log(`✅ Created user ${email} (id=${id})`);
     break;
   }
