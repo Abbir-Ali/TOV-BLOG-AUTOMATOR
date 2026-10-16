@@ -73,14 +73,15 @@ function readBody(req: IncomingMessage): Promise<URLSearchParams> {
 
 // ---- Login form ----
 
-function loginForm(params: URLSearchParams, error?: string): string {
+function loginForm(baseUrl: string, params: URLSearchParams, error?: string): string {
   const qs = params.toString();
   return `
     <div class="logo">TOV Furniture</div>
     <h1>Sign in to Blog Tool</h1>
     <p>Use your TOV account email and password.</p>
     ${error ? `<div class="err">${error}</div>` : ""}
-    <form method="POST" action="/oauth/authorize?${qs}">
+    <form method="POST" action="${baseUrl}/oauth/authorize?${qs}">
+      <input type="hidden" name="_csrf" value="">
       <label>Email</label>
       <input type="email" name="email" autocomplete="email" required autofocus>
       <label>Password</label>
@@ -169,7 +170,7 @@ export class OAuthServer {
       html(res, 400, `<h1>Bad request</h1><p>Only code_challenge_method=S256 is supported.</p>`);
       return true;
     }
-    html(res, 200, loginForm(params));
+    html(res, 200, loginForm(this.cfg.baseUrl, params));
     return true;
   }
 
@@ -200,12 +201,12 @@ export class OAuthServer {
     // Check allowlist first (before hitting the DB) to avoid timing oracle
     if (this.cfg.allowedEmails.size > 0 && !this.cfg.allowedEmails.has(email)) {
       // Deliberate vague message — don't reveal whether the email is blocked or wrong password
-      html(res, 200, loginForm(params, "Incorrect email or password. Try again."));
+      html(res, 200, loginForm(this.cfg.baseUrl, params, "Incorrect email or password. Try again."));
       return true;
     }
     const user = this.db.getUserByEmail(email);
     if (!user || !verifyPassword(password, user.password_hash)) {
-      html(res, 200, loginForm(params, "Incorrect email or password. Try again."));
+      html(res, 200, loginForm(this.cfg.baseUrl, params, "Incorrect email or password. Try again."));
       return true;
     }
     // Issue auth code (5 minute TTL)
