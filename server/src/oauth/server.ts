@@ -124,7 +124,7 @@ export class OAuthServer {
   // ---- Protected Resource Metadata (RFC 9728) ----
   private protectedResourceMetadata(res: ServerResponse): true {
     json(res, 200, {
-      resource: `${this.cfg.baseUrl}/mcp`,
+      resource: this.cfg.baseUrl,
       authorization_servers: [this.cfg.baseUrl],
       bearer_methods_supported: ["header"],
       scopes_supported: ["mcp:tools"],
