@@ -54,7 +54,7 @@ describe("parse_brief — Inspired (storage ottomans fixture)", () => {
     expect(cards[3]).toMatchObject({ badge: "Statement Length", badge_color: "#6a596b", footer_label: "Shop Thalia →" });
     expect(cards[0].bullets).toEqual(["Best for the person who wants storage with a cuddly point of view."]);
     expect(cards[0].description).not.toMatch(/Best for/);
-    expect(cards[0].footer_text).toBe("");
+    expect(cards[0].footer_text).toBe('Anita 39" Faux Shearling Storage Bench With Reversible Tray Top');
     expect(r.productCards).toHaveLength(6);
   });
 

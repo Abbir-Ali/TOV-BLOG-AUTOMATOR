@@ -369,8 +369,16 @@ function validateCard(
   if (!ft) advisories.push({ field: `${field}.footer_text`, message: `Confirm product link for "${title}"` });
   else {
     const m = CARD_FOOTER.exec(ft);
-    if (!m) errors.push({ field: `${field}.footer_text`, kind: "structure", message: `must be "" or <a href="https://…/products/…" style="${LINK_STYLE}">Name</a>` });
-    else if (!/\/products\//.test(m[1]!)) errors.push({ field: `${field}.footer_text`, kind: "structure", message: "footer link must point to a product page (/products/…)" });
+    // Accept either a proper <a> link or plain product name text (unresolved — reviewer adds the URL).
+    if (m) {
+      if (!/\/products\//.test(m[1]!)) errors.push({ field: `${field}.footer_text`, kind: "structure", message: "footer link must point to a product page (/products/…)" });
+    } else if (/<[a-z]/i.test(ft)) {
+      // Has HTML but not the right structure
+      errors.push({ field: `${field}.footer_text`, kind: "structure", message: `must be "" or <a href="https://…/products/…" style="${LINK_STYLE}">Name</a> or plain product name` });
+    } else {
+      // Plain text name — valid unresolved state, add advisory
+      advisories.push({ field: `${field}.footer_text`, message: `Confirm product link for "${ft}" — add the PDP URL during review` });
+    }
   }
 }
 

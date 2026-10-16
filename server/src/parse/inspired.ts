@@ -420,7 +420,7 @@ function buildCard(
     description,
     bullets,
     footer_label: footerLabel(title),
-    footer_text: "",
+    footer_text: escapeHtml(title), // unresolved — plain name so reviewer knows what to link
   };
 }
 
