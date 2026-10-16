@@ -1,5 +1,6 @@
 import type { ContentType } from "../config/contentTypes.js";
 import { allowedKeys, METAFIELDS, NAMESPACE, NEVER_WRITTEN, type MetafieldType } from "../config/metafields.js";
+import { CARD_KEYS } from "../config/contentTypes.js";
 import type { MetafieldDefinition } from "../shopify/definitions.js";
 import type { Issue, MetafieldInput } from "./schema.js";
 
@@ -96,6 +97,14 @@ export function serializeValue(key: string, type: MetafieldType | string, raw: u
             ? { question: f.question, answer: f.answer }
             : f,
         );
+      }
+      // Normalise product card key order for custom_content_with_badge / custom_content_with_badge2.
+      if ((key === "custom_content_with_badge" || key === "custom_content_with_badge2") && Array.isArray(v)) {
+        v = (v as Record<string, unknown>[]).map((card) => {
+          if (!card || typeof card !== "object") return card;
+          const hasAll = CARD_KEYS.every((k) => k in card);
+          return hasAll ? Object.fromEntries(CARD_KEYS.map((k) => [k, card[k]])) : card;
+        });
       }
       return { value: JSON.stringify(v) };
     }

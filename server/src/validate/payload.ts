@@ -303,7 +303,13 @@ function validateCard(
     errors.push({ field, kind: "type", message: "card must be an object" });
     return;
   }
-  const card = c as Record<string, unknown>;
+  // Normalise key order — Claude (and JSON parsers) may reorder keys alphabetically.
+  // Re-build the card in CARD_KEYS order so the order check never fails on a valid card.
+  const raw = c as Record<string, unknown>;
+  const hasAllKeys = CARD_KEYS.every((k) => k in raw);
+  const card: Record<string, unknown> = hasAllKeys
+    ? Object.fromEntries(CARD_KEYS.map((k) => [k, raw[k]]))
+    : raw;
   if (Object.keys(card).join(",") !== CARD_KEYS.join(",")) {
     errors.push({ field, kind: "type", message: `card keys must be exactly, in order: ${CARD_KEYS.join(", ")}` });
     return;

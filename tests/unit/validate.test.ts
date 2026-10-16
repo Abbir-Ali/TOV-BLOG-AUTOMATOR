@@ -81,11 +81,14 @@ describe("validate_payload", () => {
     expect(validatePayload(p, brief).ok).toBe(false);
   });
 
-  it("rejects wrong card key order", () => {
+  it("normalises wrong card key order instead of rejecting it", () => {
+    // The validator now re-orders keys into canonical order rather than rejecting the card.
+    // A card with all required keys but wrong order should pass, not error.
     const p = basePayload();
     const { title, ...rest } = p.metafields.custom_content_with_badge[0];
     p.metafields.custom_content_with_badge[0] = { ...rest, title };
-    expect(validatePayload(p, brief).errors.some((e) => /keys must be exactly/.test(e.message))).toBe(true);
+    // Should pass — key order is normalised automatically.
+    expect(validatePayload(p, brief).errors.some((e) => /keys must be exactly/.test(e.message))).toBe(false);
   });
 
   it("deduplicates advisories from parser and validator (no double image/cta warnings)", () => {
