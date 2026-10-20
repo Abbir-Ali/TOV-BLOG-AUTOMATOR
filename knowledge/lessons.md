@@ -5,6 +5,14 @@ content rules (§7) in TOV_BLOG_MCP_AGENTS.md.
 
 ## Active
 
+### L-000 — Never ask clarifying questions before creating the draft
+The one and only confirmation is "Validator passed — ready to create the draft? (yes/no)". That is it.
+Do not ask for the author name. Do not ask for the featured image URL. Do not ask for the CTA link.
+Do not ask about product URLs. Do not ask about badges. Build the best draft possible from what
+is in the doc, note everything missing as an advisory, and ask only once for the final yes/no.
+If the user says "go ahead" or "create it" or "do it" at any point after the validator passes,
+treat that as yes and create the draft immediately.
+
 ### L-001 — Unresolved products are advisories, not blockers
 If find_products returns no match for a product card, set footer_text to the product name as plain text
 (not a link, not empty). Continue building the draft. Do not stop. The reviewer adds the PDP URL during
