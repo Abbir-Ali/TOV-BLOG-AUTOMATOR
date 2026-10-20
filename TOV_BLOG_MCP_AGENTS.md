@@ -317,7 +317,7 @@ short lines without terminal punctuation followed by a paragraph.
 | cta_button_link_1 | `CTA LINK:` if present, else omit + advisory |
 | custom_content_with_badge(2) | product cards (7.4) |
 | faqs | `[{"question","answer"}]` from TYPE_4 |
-| Article_Featured_product | all resolved product-card products (GIDs) |
+| article_featured_product | all resolved product-card products (GIDs) |
 | Featured_Blog | **never written** (checklist reminder) |
 
 ### 7.4 Product cards (JSON array, keys in this exact order)
@@ -351,8 +351,8 @@ FEATURED IMAGE: …   FEATURED IMAGE ALT: …
 | featured | PUBLICATION |
 | customurl | ARTICLE URL (valid absolute https) |
 | customlink_text | fixed `read the article` |
-| Add_Schema_Mentions | fixed `true` |
-| Article_Featured_product | resolved PRODUCTS (GIDs) |
+| add_schema_mentions | fixed `true` |
+| article_featured_product | resolved PRODUCTS (GIDs) |
 Required: OWNER, HEADLINE, PUBLICATION, ARTICLE URL, SUMMARY, ≥1 product.
 
 ### 7.6 Fixed strings allowed (the only non-doc text)
@@ -382,11 +382,11 @@ resolved product name, `TOV Furniture` author fallback, badge colours, `#ffffff`
 | `cta_button_label_1` | single_line_text_field | string | ✓ | |
 | `cta_button_link_1` | single_line_text_field | URL as string | ✓ | |
 | `blogtagline` | single_line_text_field | `A · B` | ✓ | |
-| `Article_Featured_product` | **list.product_reference** (Product list — confirmed) | `JSON.stringify(["gid://shopify/Product/1", …])` — always an array, even for one product | ✓ | ✓ |
+| `article_featured_product` | **list.product_reference** (Product list — confirmed) | `JSON.stringify(["gid://shopify/Product/1", …])` — always an array, even for one product | ✓ | ✓ |
 | `featured` | single_line_text_field | publication name | | ✓ |
 | `customurl` | **url** | absolute https URL | | ✓ |
 | `customlink_text` | single_line_text_field | `read the article` | | ✓ |
-| `Add_Schema_Mentions` | boolean | `"true"` (lowercase) | | ✓ |
+| `add_schema_mentions` | boolean | `"true"` (lowercase) | | ✓ |
 
 **Never written:** `Featured_Blog`, `author_image`, `author_position`, `hidden`, `article_banner_tag`,
 `banner_position`, `bannor_imgas` (intentional typo), and anything not listed above.
