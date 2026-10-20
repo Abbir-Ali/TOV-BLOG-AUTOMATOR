@@ -64,19 +64,50 @@ TOV blog briefs follow a strict template with [FORMAT: TYPE_X_Y] section markers
 Docs with the service account tovblogautomation@log-analysis-241402.iam.gserviceaccount.com as Viewer.
 When a 403 error occurs, always give the full email address to share with — do not abbreviate it.
 
-### L-011 — Hyperlinks in the doc body are invisible — always use PRODUCT LINKS
-The Google Docs API returns plain text only. Any hyperlink on a product name inside the body (e.g. "The
-Lou Sofa" linked to its PDP) is silently dropped. The parser never sees it. Do not tell the user "I
-applied the link" or "the link is there" based on body text alone — it isn't.
+### L-011 — Hyperlinks in the doc body ARE now extracted automatically
+As of the latest server build, the Google Docs API extracts hyperlinks from the document body. If a
+product name is hyperlinked in the doc, the URL is passed to parse_brief via the `links` parameter and
+used automatically for the product card footer. Always pass fetch_google_doc's `links` field to
+parse_brief as the `links` parameter. Do NOT tell the user "hyperlinks are invisible" — that was true
+before, it is no longer true. The correct advice now is: hyperlinks in the doc body work, AND
+PRODUCT LINKS: also works. If a product still has no URL after both, then say:
+"Add it to PRODUCT LINKS: in the doc or hyperlink the product name in the body."
 
-The correct place for product URLs is always the PRODUCT LINKS: section:
-  Product Name — https://tovfurniture.com/products/handle
+### L-012 — Always show a pre-flight summary before asking for yes/no
+After the validator passes, before asking for confirmation, show a structured summary so the user
+can review without reading the full payload. Format it exactly like this:
 
-If a product card has no matching PRODUCT LINKS entry and no URL was found by find_products, always
-tell the user explicitly: "The URL for [product name] was not in PRODUCT LINKS and could not be
-resolved. Please add it to PRODUCT LINKS in the doc and re-run, or add it manually in Shopify."
+---
+**Pre-flight summary**
 
-Never silently leave a footer_text as plain text and assume the reviewer will notice.
+📄 **Title:** [title]
+📝 **Blog:** inspired · article-custom-json (or press · default)
+🏷️ **Tags:** [tag1, tag2, ...]
+👤 **Author:** [name] *(or "TOV Furniture — no Owner in doc")*
+🖼️ **Featured image:** [URL shortened] *(or "⚠️ None — add before publishing")*
+🔗 **CTA link:** [URL] *(or "⚠️ None — add before publishing")*
+
+**Product cards ([N]):**
+- [Product name] — ✅ URL resolved *(or "⚠️ No URL — add to PRODUCT LINKS: or hyperlink in doc")*
+
+**Advisories ([N]):**
+- [each advisory on its own line]
+
+**Reviewer checklist:**
+- [each checklist item]
+
+Ready to create the draft? Reply **yes** to confirm, **no** to cancel, or tell me what to change first.
+---
+
+If the user says yes / go ahead / do it / create it → create immediately, no further questions.
+If the user asks to change something → make the change, re-validate if needed, show summary again.
+
+### L-013 — When products have no URL, always suggest how to fix it
+When a product card has no URL, always tell the user both options:
+1. Add a line in the doc under PRODUCT LINKS: → `Product Name — https://tovfurniture.com/products/handle`
+2. Or hyperlink the product name anywhere in the doc body — the system extracts it automatically
+
+Never just say "no URL found" without the fix instructions.
 
 ## Proposed
 
