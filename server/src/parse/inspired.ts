@@ -28,6 +28,8 @@ const HEADER_LABELS = [
   "SUMMARY",
   "FEATURED IMAGE ALT",
   "FEATURED IMAGE",
+  "HERO IMAGE ALT",
+  "HERO IMAGE",
   "IN THIS ARTICLE",
   "PRODUCT LINKS",
   "EDITOR METADATA",
@@ -52,7 +54,7 @@ interface Section {
 /** Sub-heading: short line without terminal punctuation, followed by a paragraph. */
 const isSubheading = (s: string) => !endsWithTerminal(s) && s.split(/\s+/).length <= 12 && !/^https?:\/\//.test(s);
 
-export function parseInspired(text: string, images: InlineImage[] = []): ParseResult {
+export function parseInspired(text: string, images: InlineImage[] = [], links: Record<string, string> = {}): ParseResult {
   // Drop blank lines, // comment lines, and the TOV brief template's structural label lines
   // (e.g. "Text section — heading + paragraphs", "Article body", "Before you submit", etc.)
   // These are only noise; the [FORMAT: …] markers themselves are the real section boundaries.
@@ -108,8 +110,13 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
       lastMetaLabel = null;
       for (const [k, v] of labels) {
         if (k === "EDITOR METADATA" || k === "IN THIS ARTICLE") continue;
-        header.set(k === "SUMMARY" ? "SUMMARY (TLDR)" : k, v);
-        if (k === "FEATURED IMAGE") featuredImageLine = l.i;
+        // Normalise HERO IMAGE → FEATURED IMAGE (alias used by AI-generated briefs)
+        const normalised = k === "HERO IMAGE" ? "FEATURED IMAGE"
+          : k === "HERO IMAGE ALT" ? "FEATURED IMAGE ALT"
+          : k === "SUMMARY" ? "SUMMARY (TLDR)"
+          : k;
+        header.set(normalised, v);
+        if (normalised === "FEATURED IMAGE") featuredImageLine = l.i;
       }
       lastLabel = [...labels.keys()].pop()!;
       continue;
@@ -133,8 +140,17 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
     }
     if (l.text === "EDITOR METADATA") continue;
     // A label with an empty value takes the next line (e.g. "SUMMARY (TLDR):" on its own line).
-    if (lastLabel && lastLabel !== "FEATURED IMAGE" && header.get(lastLabel === "SUMMARY" ? "SUMMARY (TLDR)" : lastLabel) === "") {
-      header.set(lastLabel === "SUMMARY" ? "SUMMARY (TLDR)" : lastLabel, l.text);
+    if (lastLabel && lastLabel !== "FEATURED IMAGE" && lastLabel !== "HERO IMAGE" && header.get(
+      lastLabel === "SUMMARY" ? "SUMMARY (TLDR)" :
+      lastLabel === "HERO IMAGE" ? "FEATURED IMAGE" :
+      lastLabel === "HERO IMAGE ALT" ? "FEATURED IMAGE ALT" :
+      lastLabel
+    ) === "") {
+      const key = lastLabel === "SUMMARY" ? "SUMMARY (TLDR)"
+        : lastLabel === "HERO IMAGE" ? "FEATURED IMAGE"
+        : lastLabel === "HERO IMAGE ALT" ? "FEATURED IMAGE ALT"
+        : lastLabel;
+      header.set(key, l.text);
       lastLabel = null;
       continue;
     }
@@ -277,10 +293,18 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
   if (!cta.title) missing.push("TYPE_5_CTA heading");
 
   // ---- product links → card refs ----
+  // Priority: 1) PRODUCT LINKS section, 2) hyperlinks from doc body, 3) name-only search
   cardSlots.forEach((cards, slot) =>
     cards.forEach((card, index) => {
-      const link = matchLink(card.title, productLinks);
-      productCards.push({ slot: CARD_METAFIELDS[slot]!, index, productRef: { query: card.title, url: link?.url ?? null } });
+      // Check PRODUCT LINKS section first (explicit)
+      const explicit = matchLink(card.title, productLinks);
+      // Fall back to hyperlinks embedded in the doc body (extracted by fetch_google_doc)
+      const bodyUrl = !explicit?.url ? findLinkByTitle(card.title, links) : null;
+      const resolvedUrl = explicit?.url ?? bodyUrl ?? null;
+      if (bodyUrl && !explicit?.url) {
+        decisions.push(`Product URL for "${card.title}" resolved from doc hyperlink: ${bodyUrl}`);
+      }
+      productCards.push({ slot: CARD_METAFIELDS[slot]!, index, productRef: { query: card.title, url: resolvedUrl } });
     }),
   );
   if (productLinks.length) {
@@ -319,9 +343,20 @@ export function parseInspired(text: string, images: InlineImage[] = []): ParseRe
   }
 
   // ---- featured image ----
-  const featuredSource = header.get("FEATURED IMAGE") || null;
+  let featuredSource = header.get("FEATURED IMAGE") || null;
   const featuredAlt = header.get("FEATURED IMAGE ALT") ?? "";
-  if (featuredImageLine === null) advisories.push({ field: "image", message: "No FEATURED IMAGE in doc — upload during review" });
+
+  // Fallback: scan Editor notes for a CDN/image URL when FEATURED IMAGE is blank.
+  // AI-generated briefs often put the hero image URL in Editor notes instead of FEATURED IMAGE.
+  if (!featuredSource && editorNotes) {
+    const urlMatch = /(https:\/\/cdn\.shopify\.com\/[^\s"')\]]+|https:\/\/drive\.google\.com\/[^\s"')\]]+)/i.exec(editorNotes);
+    if (urlMatch) {
+      featuredSource = urlMatch[1]!;
+      decisions.push(`Featured image URL extracted from Editor notes: ${featuredSource}`);
+    }
+  }
+
+  if (featuredImageLine === null && !featuredSource) advisories.push({ field: "image", message: "No FEATURED IMAGE in doc — upload during review" });
 
   // ---- metafields ----
   const tags = rawTags.map(toTag);
@@ -451,6 +486,37 @@ function matchLink(title: string, links: { name: string; url: string | null }[])
     links.find((l) => t.startsWith(l.name.toLowerCase()) || l.name.toLowerCase().startsWith(t)) ??
     links.find((l) => l.name && t.split(/\s+/)[0] === l.name.toLowerCase().split(/\s+/)[0])
   );
+}
+
+/**
+ * Find a URL in the doc's hyperlink map by matching against the product title.
+ * Tries exact match first, then prefix/suffix, then first-word match.
+ * Only returns tovfurniture.com/products/ URLs — ignores external links.
+ */
+function findLinkByTitle(title: string, links: Record<string, string>): string | null {
+  const t = title.toLowerCase().trim();
+  const isProductUrl = (u: string) => /\/products\//i.test(u);
+
+  // Exact match
+  const exact = links[t];
+  if (exact && isProductUrl(exact)) return exact;
+
+  // Prefix/contains match — title starts with a key or key starts with title
+  for (const [key, url] of Object.entries(links)) {
+    if (!isProductUrl(url)) continue;
+    if (t.startsWith(key) || key.startsWith(t)) return url;
+  }
+
+  // First significant word match
+  const firstWord = t.split(/\s+/)[0];
+  if (firstWord && firstWord.length > 3) {
+    for (const [key, url] of Object.entries(links)) {
+      if (!isProductUrl(url)) continue;
+      if (key.startsWith(firstWord)) return url;
+    }
+  }
+
+  return null;
 }
 
 const escapeAttr = (s: string) => escapeHtml(s).replace(/"/g, "&quot;");

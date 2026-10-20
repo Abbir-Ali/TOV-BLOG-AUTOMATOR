@@ -101,11 +101,15 @@ server.registerTool(
         )
         .optional()
         .describe("Uploaded inline images to place in the body (Inspired only)"),
+      links: z
+        .record(z.string(), z.string())
+        .optional()
+        .describe("Hyperlinks from fetch_google_doc — key=normalised link text, value=URL. Used to auto-resolve product URLs from doc hyperlinks."),
     },
     annotations: { readOnlyHint: true, openWorldHint: false },
   },
-  run(async ({ contentType, text, images }: { contentType: "inspired" | "press"; text: string; images?: { afterLineIndex: number; url?: string; alt?: string; role?: "featured" | "inline" }[] }) => ({
-    ...parseBrief(contentType, text, images),
+  run(async ({ contentType, text, images, links }: { contentType: "inspired" | "press"; text: string; images?: { afterLineIndex: number; url?: string; alt?: string; role?: "featured" | "inline" }[]; links?: Record<string, string> }) => ({
+    ...parseBrief(contentType, text, images, links),
   })),
 );
 

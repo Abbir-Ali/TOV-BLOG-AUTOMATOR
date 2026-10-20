@@ -18,7 +18,17 @@ const LABELS = [
   "FEATURED IMAGE",
 ] as const;
 
-export function parsePress(text: string): ParseResult {
+/** Find a product URL from doc hyperlinks by name — only /products/ URLs. */
+function findProductLink(name: string, links: Record<string, string>): string | null {
+  const t = name.toLowerCase().trim();
+  for (const [key, url] of Object.entries(links)) {
+    if (!/\/products\//i.test(url)) continue;
+    if (key === t || key.startsWith(t) || t.startsWith(key)) return url;
+  }
+  return null;
+}
+
+export function parsePress(text: string, links: Record<string, string> = {}): ParseResult {
   const lines = text.split(/\r?\n/).map((t, i) => ({ i, text: t.trim() })).filter((l) => l.text && !l.text.startsWith("//"));
   const fields = new Map<string, string>();
   const products: { name: string; url: string | null }[] = [];
@@ -84,7 +94,15 @@ export function parsePress(text: string): ParseResult {
       advisories,
       checklist: get("COVERAGE DATE") ? [`Coverage date in doc: ${get("COVERAGE DATE")}`] : [],
     },
-    productCards: products.map((p, index) => ({ slot: "article_featured_product", index, productRef: { query: p.name, url: p.url } })),
+    productCards: products.map((p, index) => ({
+      slot: "article_featured_product",
+      index,
+      productRef: {
+        query: p.name,
+        // Use explicit URL from PRODUCTS section, or fall back to body hyperlink
+        url: p.url ?? findProductLink(p.name, links),
+      },
+    })),
     featuredImage: { source: get("FEATURED IMAGE") || null, alt: get("FEATURED IMAGE ALT"), labelLineIndex: featuredImageLine },
     editor: {},
     subtitle: "",

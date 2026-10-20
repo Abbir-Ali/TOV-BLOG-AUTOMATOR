@@ -41,6 +41,13 @@ export interface FetchedDoc {
   images: DocImage[];
   tables: DocTable[];
   detectedContentType: "inspired" | "press" | "unknown";
+  /**
+   * Hyperlinks extracted from the document body.
+   * Key = normalised link text (lowercase, trimmed), value = URL.
+   * Use this to resolve product URLs from hyperlinked names in the body.
+   * The Google Docs API strips links from plain text — this map preserves them.
+   */
+  links: Record<string, string>;
 }
 
 export function docIdFromUrl(urlOrId: string): string {
@@ -99,7 +106,10 @@ function accessError(err: unknown, what: string): never {
 }
 
 /* Minimal shapes of the Docs API objects we read. */
-interface TextRun { content?: string | null }
+interface TextRun {
+  content?: string | null;
+  textStyle?: { link?: { url?: string | null } | null } | null;
+}
 interface ParaElement { textRun?: TextRun | null; inlineObjectElement?: { inlineObjectId?: string | null } | null }
 interface Paragraph { elements?: ParaElement[] | null; positionedObjectIds?: string[] | null }
 interface StructuralElement {
@@ -125,13 +135,31 @@ export async function fetchGoogleDoc(docUrlOrId: string): Promise<FetchedDoc> {
   const paragraphs: string[] = [];
   const imageRefs: { objectId: string; afterLineIndex: number }[] = [];
   const tables: DocTable[] = [];
+  /** text → url for all hyperlinks found in the document */
+  const links: Record<string, string> = {};
 
   const paraText = (p: Paragraph) => (p.elements ?? []).map((e) => e.textRun?.content ?? "").join("");
+
+  /** Collect hyperlinks from paragraph elements */
+  const collectLinks = (p: Paragraph) => {
+    for (const e of p.elements ?? []) {
+      const url = e.textRun?.textStyle?.link?.url;
+      const text = (e.textRun?.content ?? "").trim();
+      if (url && text && !url.startsWith("mailto:")) {
+        // Store by normalised text — multiple forms (e.g. with/without size suffix)
+        links[text.toLowerCase()] = url;
+        // Also store without trailing punctuation
+        const stripped = text.replace(/[.,;:!?]+$/, "").trim().toLowerCase();
+        if (stripped && stripped !== text.toLowerCase()) links[stripped] = url;
+      }
+    }
+  };
 
   const walk = (content: StructuralElement[]) => {
     for (const el of content) {
       if (el.paragraph) {
         const p = el.paragraph;
+        collectLinks(p);
         const lines = cleanLine(paraText(p))
           .split("\n")
           .map((l) => l.trim())
@@ -174,6 +202,7 @@ export async function fetchGoogleDoc(docUrlOrId: string): Promise<FetchedDoc> {
     paragraphs,
     images,
     tables,
+    links,
     detectedContentType: detectContentType(text),
   };
 }
