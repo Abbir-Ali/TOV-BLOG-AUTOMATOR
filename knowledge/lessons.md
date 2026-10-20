@@ -56,6 +56,20 @@ TOV blog briefs follow a strict template with [FORMAT: TYPE_X_Y] section markers
 Docs with the service account tovblogautomation@log-analysis-241402.iam.gserviceaccount.com as Viewer.
 When a 403 error occurs, always give the full email address to share with — do not abbreviate it.
 
+### L-011 — Hyperlinks in the doc body are invisible — always use PRODUCT LINKS
+The Google Docs API returns plain text only. Any hyperlink on a product name inside the body (e.g. "The
+Lou Sofa" linked to its PDP) is silently dropped. The parser never sees it. Do not tell the user "I
+applied the link" or "the link is there" based on body text alone — it isn't.
+
+The correct place for product URLs is always the PRODUCT LINKS: section:
+  Product Name — https://tovfurniture.com/products/handle
+
+If a product card has no matching PRODUCT LINKS entry and no URL was found by find_products, always
+tell the user explicitly: "The URL for [product name] was not in PRODUCT LINKS and could not be
+resolved. Please add it to PRODUCT LINKS in the doc and re-run, or add it manually in Shopify."
+
+Never silently leave a footer_text as plain text and assume the reviewer will notice.
+
 ## Proposed
 
 _(the Learner writes here; Abbir approves and moves items to Active)_

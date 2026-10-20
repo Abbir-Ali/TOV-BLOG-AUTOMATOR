@@ -39,6 +39,7 @@ PRODUCT LINKS:
 // One line per product, in the format: Product Name — https://tovfurniture.com/products/handle
 // The product name must match the name on the card exactly, without the badge.
 // e.g. Anita 39" Faux Shearling Storage Bench — https://tovfurniture.com/products/anita-storage-bench
+// IMPORTANT: hyperlinks inside the body text are invisible to the system. Always add URLs here.
 // Leave blank if this post has no product cards.
 
 Article body

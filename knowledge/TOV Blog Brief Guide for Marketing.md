@@ -92,6 +92,10 @@ For posts with product roundups (`[FORMAT: TYPE_2_OPTIONS]`), each product needs
 If you don't have the product URL yet, write the name only — the system will search by name and add an
 advisory to confirm the link. Do not leave the name out.
 
+**Important: hyperlinks in the doc body are invisible to the system.** If you hyperlink a product name
+inside the body text, the system cannot see that URL. The only place URLs are read from is `PRODUCT LINKS:`.
+Always add every product URL there, even if it is already linked in the body.
+
 ---
 
 ## Editor notes: what the system acts on
