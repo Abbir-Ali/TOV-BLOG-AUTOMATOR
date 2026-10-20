@@ -2,8 +2,10 @@
   "mcpServers": {
     "tov-shopify": {
       "command": "node",
-      "args": ["E:/TOV Blog Tool/dist/index.js"],
-       "env": {
+      "args": [
+        "E:/TOV Blog Tool/dist/index.js"
+      ],
+      "env": {
         "HTTP_PORT": ""
       },
       "disabled": false,
@@ -15,7 +17,8 @@
         "find_article_by_source",
         "get_article",
         "validate_payload"
-      ]
+      ],
+      "disabledTools": []
     }
   }
 }
