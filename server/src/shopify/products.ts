@@ -65,7 +65,7 @@ export async function findProducts(input: { handle?: string; query?: string; lim
   const handle = input.handle ? (handleFromUrl(input.handle) ?? input.handle.trim().toLowerCase()) : undefined;
   if (!handle && !input.query?.trim()) return [];
 
-  const q = handle ? `handle:${handle}` : searchText(input.query!);
+  const q = handle ? `handle:${handle}` : `status:active ${searchText(input.query!)}`;
   const data = await shopifyGraphql<Resp>(QUERY, { first: limit, query: q });
   const base = getConfig().publicStoreUrl;
   const words = significantWords(input.query ?? "");
