@@ -3,7 +3,9 @@
     "tov-shopify": {
       "command": "node",
       "args": ["E:/TOV Blog Tool/dist/index.js"],
-      "env": {},
+       "env": {
+        "HTTP_PORT": ""
+      },
       "disabled": false,
       "autoApprove": [
         "fetch_google_doc",
