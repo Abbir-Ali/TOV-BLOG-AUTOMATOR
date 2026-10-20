@@ -30,8 +30,8 @@ export const PayloadSchema = z.object({
     .optional()
     .describe(
       "Keyed by metafield key (namespace custom). Send natural values: strings; arrays/objects for json fields; " +
-        "array of product GIDs for Article_Featured_product; plain string or rich-text object for quick_scoop_content; " +
-        "true for Add_Schema_Mentions. The server serializes and types them (§8).",
+        "array of product GIDs for article_featured_product; plain string or rich-text object for quick_scoop_content; " +
+        "true for add_schema_mentions. The server serializes and types them (§8).",
     ),
   advisories: z.array(AdvisorySchema).optional(),
   checklist: z.array(z.string()).optional(),

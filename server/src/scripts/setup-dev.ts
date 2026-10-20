@@ -27,11 +27,11 @@ const ADMIN_NAMES: Record<string, string> = {
   cta_button_label_1: "cta button label 1",
   cta_button_link_1: "cta button link 1",
   blogtagline: "blogtagline",
-  Article_Featured_product: "Article Featured product",
+  article_featured_product: "Article Featured product",
   featured: "featured",
   customurl: "customurl",
   customlink_text: "customlink_text",
-  Add_Schema_Mentions: "Add Schema Mentions",
+  add_schema_mentions: "Add Schema Mentions",
   // Not written by the tool, but exists on the live store so reviewers can set it in admin.
   Featured_Blog: "Featured Blog",
 };

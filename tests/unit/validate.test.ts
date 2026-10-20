@@ -118,8 +118,8 @@ describe("validate_payload", () => {
 
 describe("metafield serialization (§8)", () => {
   it("formats each type", () => {
-    expect(serializeValue("Add_Schema_Mentions", "boolean", true).value).toBe("true");
-    expect(serializeValue("Add_Schema_Mentions", "boolean", "True").error).toBeTruthy();
+    expect(serializeValue("add_schema_mentions", "boolean", true).value).toBe("true");
+    expect(serializeValue("add_schema_mentions", "boolean", "True").error).toBeTruthy();
     expect(serializeValue("x", "single_line_text_field", "a\nb").error).toMatch(/newlines/);
     expect(JSON.parse(serializeValue("q", "rich_text_field", "Hello").value!)).toEqual({
       type: "root",
@@ -132,8 +132,8 @@ describe("metafield serialization (§8)", () => {
   });
 
   it("builds typed inputs in namespace custom", () => {
-    const { inputs, errors } = buildMetafieldInputs("press", { featured: "Vogue", Add_Schema_Mentions: true, customlink_text: "read the article" });
+    const { inputs, errors } = buildMetafieldInputs("press", { featured: "Vogue", add_schema_mentions: true, customlink_text: "read the article" });
     expect(errors).toEqual([]);
-    expect(inputs).toContainEqual({ namespace: "custom", key: "Add_Schema_Mentions", type: "boolean", value: "true" });
+    expect(inputs).toContainEqual({ namespace: "custom", key: "add_schema_mentions", type: "boolean", value: "true" });
   });
 });

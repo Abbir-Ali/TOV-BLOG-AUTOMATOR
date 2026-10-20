@@ -61,7 +61,7 @@ export function parsePress(text: string): ParseResult {
   const summary = get("SUMMARY");
   if (summary.includes("\n")) unparsed.push({ kind: "multi-paragraph-summary", text: summary, hint: "Press body is a single <p>; joined with a space" });
   if (featuredImageLine === null) advisories.push({ field: "image", message: "No FEATURED IMAGE in doc — upload during review" });
-  for (const pr of products) if (!pr.url) advisories.push({ field: "Article_Featured_product", message: `No URL for product "${pr.name}" — matched by name` });
+  for (const pr of products) if (!pr.url) advisories.push({ field: "article_featured_product", message: `No URL for product "${pr.name}" — matched by name` });
 
   return {
     contentType: "press",
@@ -79,12 +79,12 @@ export function parsePress(text: string): ParseResult {
         ...(get("PUBLICATION") && { featured: get("PUBLICATION") }),
         ...(articleUrl && { customurl: articleUrl }),
         customlink_text: PRESS_LINK_TEXT,
-        Add_Schema_Mentions: true,
+        add_schema_mentions: true,
       },
       advisories,
       checklist: get("COVERAGE DATE") ? [`Coverage date in doc: ${get("COVERAGE DATE")}`] : [],
     },
-    productCards: products.map((p, index) => ({ slot: "Article_Featured_product", index, productRef: { query: p.name, url: p.url } })),
+    productCards: products.map((p, index) => ({ slot: "article_featured_product", index, productRef: { query: p.name, url: p.url } })),
     featuredImage: { source: get("FEATURED IMAGE") || null, alt: get("FEATURED IMAGE ALT"), labelLineIndex: featuredImageLine },
     editor: {},
     subtitle: "",

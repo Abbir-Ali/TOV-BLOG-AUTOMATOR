@@ -103,7 +103,7 @@ export function getConfig(): Config {
       .split(",")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean),
-    apiVersion: clean(e.SHOPIFY_API_VERSION) ?? "2026-10",
+    apiVersion: clean(e.SHOPIFY_API_VERSION) ?? "2026-04",
     clientId: clean(e.SHOPIFY_CLIENT_ID),
     clientSecret: clean(e.SHOPIFY_CLIENT_SECRET),
     adminToken: clean(e.SHOPIFY_ADMIN_TOKEN),

@@ -397,8 +397,8 @@ function validatePress(
   if (mf.customlink_text !== undefined && mf.customlink_text !== PRESS_LINK_TEXT) {
     errors.push({ field: "metafields.customlink_text", kind: "derived", message: `must be "${PRESS_LINK_TEXT}"` });
   }
-  if (mf.Add_Schema_Mentions !== undefined && mf.Add_Schema_Mentions !== true && mf.Add_Schema_Mentions !== "true") {
-    errors.push({ field: "metafields.Add_Schema_Mentions", kind: "derived", message: "must be true" });
+  if (mf.add_schema_mentions !== undefined && mf.add_schema_mentions !== true && mf.add_schema_mentions !== "true") {
+    errors.push({ field: "metafields.add_schema_mentions", kind: "derived", message: "must be true" });
   }
 }
 

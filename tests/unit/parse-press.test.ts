@@ -31,20 +31,20 @@ describe("parse_brief — Press", () => {
       featured: "Architectural Digest",
       customurl: "https://www.architecturaldigest.com/story/best-ottomans",
       customlink_text: "read the article",
-      Add_Schema_Mentions: true,
+      add_schema_mentions: true,
     });
     expect(r.productCards).toEqual([
-      { slot: "Article_Featured_product", index: 0, productRef: { query: "Dex Ottoman", url: "https://tovfurniture.com/products/dex-ottoman" } },
+      { slot: "article_featured_product", index: 0, productRef: { query: "Dex Ottoman", url: "https://tovfurniture.com/products/dex-ottoman" } },
     ]);
     expect(r.featuredImage).toMatchObject({ source: "https://example.com/dex.jpg", alt: "Dex Ottoman in a living room" });
   });
 
   it("validates once products are resolved", () => {
-    const p = { ...r.payload, source: { docId: "1AbCdEfGhIjKlMnOpQrStUvWxYz" }, metafields: { ...mf, Article_Featured_product: ["gid://shopify/Product/42"] } };
+    const p = { ...r.payload, source: { docId: "1AbCdEfGhIjKlMnOpQrStUvWxYz" }, metafields: { ...mf, article_featured_product: ["gid://shopify/Product/42"] } };
     const v = validatePayload(p, doc);
     expect(v.errors).toEqual([]);
     const missing = validatePayload({ ...p, metafields: mf }, doc);
-    expect(missing.errors.map((e) => e.field)).toContain("metafields.Article_Featured_product");
+    expect(missing.errors.map((e) => e.field)).toContain("metafields.article_featured_product");
   });
 
   it("reports missing required labels", () => {

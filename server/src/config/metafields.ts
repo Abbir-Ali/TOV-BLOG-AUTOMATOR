@@ -35,16 +35,17 @@ export const METAFIELDS: Record<string, MetafieldSpec> = {
   cta_button_label_1: { type: "single_line_text_field", types: ["inspired"] },
   cta_button_link_1: { type: "single_line_text_field", types: ["inspired"] },
   blogtagline: { type: "single_line_text_field", types: ["inspired"] },
-  Article_Featured_product: { type: "list.product_reference", types: ["inspired", "press"] },
+  article_featured_product: { type: "list.product_reference", types: ["inspired", "press"] },
   featured: { type: "single_line_text_field", types: ["press"] },
   customurl: { type: "url", types: ["press"] },
   customlink_text: { type: "single_line_text_field", types: ["press"] },
-  Add_Schema_Mentions: { type: "boolean", types: ["press"] },
+  add_schema_mentions: { type: "boolean", types: ["press"] },
 };
 
 /** Never written, whatever the payload says (rule 6 + §8). */
 export const NEVER_WRITTEN = new Set([
   "Featured_Blog",
+  "featured_blog",
   "author_image",
   "author_position",
   "hidden",
@@ -75,5 +76,5 @@ export const REQUIRED_METAFIELDS: Record<ContentType, string[]> = {
     "cta_text_1",
     "cta_button_label_1",
   ],
-  press: ["featured", "customurl", "customlink_text", "Add_Schema_Mentions", "Article_Featured_product"],
+  press: ["featured", "customurl", "customlink_text", "add_schema_mentions", "article_featured_product"],
 };
