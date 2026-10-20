@@ -128,8 +128,10 @@ Every agent reads `knowledge/lessons.md` (§10) before starting.
 - **Does:** for each product card (and each Press product) calls `find_products` with the URL handle if present,
   else the name. Picks a match.
 - **Decides:** match confidence. **Auto-accept** only when: exact handle match from a URL, OR exactly one result
-  whose title contains every significant word of the card title. Otherwise unresolved → `footer_text: ""` +
-  advisory "confirm product link for <title>".
+  whose title contains every significant word of the card title. Otherwise unresolved → `footer_text` set to
+  the plain product name (not empty) + advisory "confirm product link for <title>".
+- **Never** assume a product URL from a hyperlink in the doc body — the Docs API returns plain text only.
+  The only source of URLs is `PRODUCT LINKS:`. If a URL is missing, say so explicitly in the advisory.
 - **Writes:** `03-products.json` `{ resolved: [{ cardIndex, productGid, handle, url, title }], unresolved: [] }`.
 
 ### 4.4 Media agent — `media`
@@ -259,7 +261,8 @@ IN THIS ARTICLE:       (list of h2 headings)
 [FORMAT: TYPE_1_TEXT]       heading, paragraphs
 [FORMAT: TYPE_3_SUBTITLES]  heading, (sub-heading, paragraph)×n
 [FORMAT: TYPE_2_OPTIONS]    heading, optional intro, (product name line [+ badge], description with "Best for…")×n
-PRODUCT LINKS:              (optional) "Name — URL" per line
+PRODUCT LINKS:              (optional) "Name — URL" per line — **only source for product URLs; hyperlinks in
+                            the doc body are invisible to the Google Docs API and must never be assumed**
 [FORMAT: TYPE_4_FAQ]        heading, (question ending "?", answer)×n
 [FORMAT: TYPE_5_CTA]        heading, paragraph, button label, optional "CTA LINK: url"
 [FORMAT: TYPE_6_COMPARISON] comparison pairs
